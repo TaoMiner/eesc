@@ -184,7 +184,7 @@ def load_data_and_embeddings(
     if FLAGS.embedding_data_path:
         logger.Log("Loading vocabulary with " + str(len(vocabulary))
                    + " words from " + FLAGS.embedding_data_path)
-        initial_embeddings = util.LoadEmbeddingsFromText(
+        initial_embeddings = util.LoadEmbeddingsFromBinary(
             vocabulary, FLAGS.word_embedding_dim, FLAGS.embedding_data_path)
     else:
         initial_embeddings = None

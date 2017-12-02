@@ -14,14 +14,16 @@ SWEEP_RUNS = 2
 
 LIN = "LIN"
 EXP = "EXP"
+BOOL = "BOOL"
+CHOICE = "CHOICE"
 SS_BASE = "SS_BASE"
 
 FLAGS = gflags.FLAGS
 
-gflags.DEFINE_string("training_data_path", "/home/sb6065/snli_1.0/snli_1.0_train.jsonl", "")
-gflags.DEFINE_string("eval_data_path", "/home/sb6065/snli_1.0/snli_1.0_dev.jsonl", "")
-gflags.DEFINE_string("embedding_data_path", "/home/sb6065/glove/glove.840B.300d.txt", "")
-gflags.DEFINE_string("log_path", "/home/sb6065/logs", "")
+gflags.DEFINE_string("training_data_path", "/home/caoyx/data/snli/snli_1.0_dev.jsonl", "")
+gflags.DEFINE_string("eval_data_path", "/home/caoyx/data/snli/snli_1.0_dev.jsonl", "")
+gflags.DEFINE_string("embedding_data_path", "/home/caoyx/data/etc/exp1/envec/vectors_word0", "")
+gflags.DEFINE_string("log_path", "/home/caoyx/data/log/eesc", "")
 
 FLAGS(sys.argv)
 
@@ -36,39 +38,40 @@ FLAGS(sys.argv)
 
 FIXED_PARAMETERS = {
     "data_type":     "snli",
-    "model_type":      "RLSPINN",
+    "model_type":      "ChoiPyramid",
     "training_data_path":    FLAGS.training_data_path,
     "eval_data_path":    FLAGS.eval_data_path,
     "embedding_data_path": FLAGS.embedding_data_path,
     "log_path": FLAGS.log_path,
     "metrics_path": FLAGS.log_path,
     "ckpt_path":  FLAGS.log_path,
-    "word_embedding_dim":   "300",
-    "model_dim":   "600",
+    "gpu":  "0",
+    "word_embedding_dim":   "200",
+    "model_dim":   "200",
     "seq_length":   "150",
     "eval_seq_length":  "150",
     "eval_interval_steps": "1000",
     "statistics_interval_steps": "1000",
-    "use_internal_parser": "",
     "batch_size":  "64",
-    "use_encode": "",
-    "encode_reverse": "",
-    "noencode_bidirectional": "",
+    "encode": "gru",
     "num_mlp_layers": "2",
+    "semantic_classifier_keep_rate": "1.0",
+    "embedding_keep_rate": "1.0",
+    "sample_interval_steps": "1000",
+    "pyramid_test_time_temperature_multiplier": "0.0",
+    "nocomposition_ln": "",
+    "learning_rate": "0.001",
     "transition_weight": "1.0",
-    "rl_entropy": "",
 }
 
 # Tunable parameters.
 SWEEP_PARAMETERS = {
-    "learning_rate":      ("lr", EXP, 0.0002, 0.002),  # RNN likes higher, but below 009.
-    "l2_lambda":          ("l2", EXP, 8e-7, 2e-5),
-    "semantic_classifier_keep_rate": ("skr", LIN, 0.7, 0.95),  # NB: Keep rates may depend considerably on dims.
-    "embedding_keep_rate": ("ekr", LIN, 0.7, 0.95),
-    "learning_rate_decay_per_10k_steps": ("dec", EXP, 0.5, 1.0),
-    "tracking_lstm_hidden_dim": ("tdim", EXP, 24, 128),
-    "rl_weight":  ("rlwt", EXP, 0.00001, 0.01),
-    "rl_entropy_beta": ("rle", EXP, 0.00001, 0.1)
+    "l2_lambda":          ("l2", EXP, 8e-7, 1e-3),
+    "learning_rate_decay_per_10k_steps": ("dc", LIN, 0.3, 1.0),
+    "pyramid_trainable_temperature": ("tt", BOOL, None, None),
+    "pyramid_temperature_decay_per_10k_steps": ("tdc", EXP, 0.2, 1.0),
+    "pyramid_temperature_cycle_length": ("cl", CHOICE, ['0', '0', '300', '3000'], None),
+    "learning_rate": ("lr", EXP, 0.0001, 0.01),
 }
 
 sweep_name = "sweep_" + NAME + "_" + \

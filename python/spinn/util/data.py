@@ -4,6 +4,7 @@ import random
 import itertools
 import time
 import sys
+import struct
 
 import numpy as np
 
@@ -518,11 +519,10 @@ def BuildVocabulary(raw_training_data, raw_eval_sets, embedding_path,
     # Build a vocabulary of words in the data for which we have an
     # embedding.
     assert embedding_path is not None, "Open-vocabulary models require pretrained vectors. Running with empty vocabulary."
-    vocabulary = BuildVocabularyForTextEmbeddingFile(
+    vocabulary = BuildVocabularyForBinaryEmbeddingFile(
         embedding_path, types_in_data, CORE_VOCABULARY)
 
     return vocabulary
-
 
 def BuildVocabularyForTextEmbeddingFile(path, types_in_data, core_vocabulary):
     """Quickly iterates through a GloVe-formatted text vector file to
@@ -543,6 +543,98 @@ def BuildVocabularyForTextEmbeddingFile(path, types_in_data, core_vocabulary):
                 next_index += 1
     return vocabulary
 
+# revise by ethan cao
+def BuildVocabularyForBinaryEmbeddingFile(path, types_in_data, core_vocabulary):
+    """Quickly iterates through a GloVe-formatted text vector file to
+    extract a working vocabulary of words that occur both in the data and
+    in the vector file."""
+
+    # TODO: Report on *which* words are skipped. See if any are common.
+
+    vocabulary = {}
+    vocabulary.update(core_vocabulary)
+    next_index = len(vocabulary)
+    vocab_size = 0
+    with open(path, 'rb') as f:
+        # read file head: vocab size and layer size
+        char_set = []
+        while True:
+            ch = f.read(1)
+            if ch == b' ' or ch == b'\t':
+                vocab_size = (int)(b''.join(char_set).decode())
+                del char_set[:]
+                continue
+            if ch == b'\n':
+                layer_size = (int)(b''.join(char_set).decode())
+                break
+            char_set.append(ch)
+        for i in range(vocab_size):
+            # read entity label
+            del char_set[:]
+            while True:
+                ch = struct.unpack('c', f.read(1))[0]
+                # add split interval white space
+                if ch == b' ' or ch == b'\t':
+                    break
+                char_set.append(ch)
+            word = b''.join(char_set)
+            word = word.decode('utf-8', 'ignore')
+            f.read(4 * layer_size)
+            if word in types_in_data and word not in vocabulary:
+                vocabulary[word] = next_index
+                next_index += 1
+            f.read(1)  # \n
+    return vocabulary
+
+def initVectorFormat(size):
+    tmp_struct_fmt = []
+    for i in range(size):
+        tmp_struct_fmt.append('f')
+    p_struct_fmt = "".join(tmp_struct_fmt)
+    return p_struct_fmt
+
+def LoadEmbeddingsFromBinary(vocabulary, embedding_dim, path):
+    """Prepopulates a numpy embedding matrix indexed by vocabulary with
+    values from a GloVe - format vector file.
+
+    For now, values not found in the file will be set to zero."""
+    loaded = 0
+    emb = np.zeros( (len(vocabulary), embedding_dim), dtype=np.float32)
+    layer_size = embedding_dim
+    vocab_size = 0
+    with open(path, 'rb') as f:
+        # read file head: vocab size and layer size
+        char_set = []
+        while True:
+            ch = f.read(1)
+            if ch == b' ' or ch == b'\t':
+                vocab_size = (int)(b''.join(char_set).decode())
+                del char_set[:]
+                continue
+            if ch == b'\n':
+                layer_size = (int)(b''.join(char_set).decode())
+                break
+            char_set.append(ch)
+        assert layer_size == embedding_dim, "No matched word embeddings dimension."
+        p_struct_fmt = initVectorFormat(embedding_dim)
+        for i in range(vocab_size):
+            # read entity label
+            del char_set[:]
+            while True:
+                ch = struct.unpack('c', f.read(1))[0]
+                # add split interval white space
+                if ch == b' ' or ch == b'\t':
+                    break
+                char_set.append(ch)
+            word = b''.join(char_set)
+            word = word.decode('utf-8', 'ignore')
+            tmp_vec = np.array(struct.unpack(p_struct_fmt, f.read(4 * embedding_dim)), dtype=float)
+            if word in vocabulary:
+                emb[vocabulary[word], :] = tmp_vec
+                loaded += 1
+            f.read(1)  # \n
+    assert loaded > 0, "No word embeddings of correct size found in file."
+    return emb
 
 def LoadEmbeddingsFromText(vocabulary, embedding_dim, path):
     """Prepopulates a numpy embedding matrix indexed by vocabulary with
