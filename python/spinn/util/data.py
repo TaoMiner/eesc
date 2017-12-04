@@ -496,7 +496,7 @@ def PreprocessDataset(
     return X, transitions, y, num_transitions, example_ids
 
 
-def BuildVocabulary(raw_training_data, raw_eval_sets, embedding_path,
+def BuildVocabulary(raw_training_data, raw_eval_sets, embedding_path, embedding_format,
                     logger=None, sentence_pair_data=False):
     # Find the set of words that occur in the data.
     logger.Log("Constructing vocabulary...")
@@ -519,7 +519,8 @@ def BuildVocabulary(raw_training_data, raw_eval_sets, embedding_path,
     # Build a vocabulary of words in the data for which we have an
     # embedding.
     assert embedding_path is not None, "Open-vocabulary models require pretrained vectors. Running with empty vocabulary."
-    vocabulary = BuildVocabularyForBinaryEmbeddingFile(
+    vocabulary = BuildVocabularyForTextEmbeddingFile(
+        embedding_path, types_in_data, CORE_VOCABULARY) if embedding_format == 't' else BuildVocabularyForBinaryEmbeddingFile(
         embedding_path, types_in_data, CORE_VOCABULARY)
 
     return vocabulary

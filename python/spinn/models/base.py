@@ -174,6 +174,7 @@ def load_data_and_embeddings(
             raw_training_data,
             raw_eval_sets,
             FLAGS.embedding_data_path,
+            FLAGS.embedding_format,
             logger=logger,
             sentence_pair_data=data_manager.SENTENCE_PAIR_DATA)
     else:
@@ -184,7 +185,8 @@ def load_data_and_embeddings(
     if FLAGS.embedding_data_path:
         logger.Log("Loading vocabulary with " + str(len(vocabulary))
                    + " words from " + FLAGS.embedding_data_path)
-        initial_embeddings = util.LoadEmbeddingsFromBinary(
+        initial_embeddings = util.LoadEmbeddingsFromText(
+            vocabulary, FLAGS.word_embedding_dim, FLAGS.embedding_data_path) if FLAGS.embedding_format == 't' else util.LoadEmbeddingsFromBinary(
             vocabulary, FLAGS.word_embedding_dim, FLAGS.embedding_data_path)
     else:
         initial_embeddings = None
@@ -336,6 +338,7 @@ def get_flags():
         "Seed shuffling of eval data.")
     gflags.DEFINE_string("embedding_data_path", None,
                          "If set, load GloVe-formatted embeddings from here.")
+    gflags.DEFINE_enum("embedding_format", "t", ["t", "b"], "load embedding from text file or binary file.")
 
     # Model architecture settings.
     gflags.DEFINE_enum(
