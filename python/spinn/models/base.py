@@ -27,6 +27,7 @@ import spinn.spinn_core_model
 import spinn.plain_rnn
 import spinn.cbow
 import spinn.choi_pyramid
+import spinn.eesc
 
 from tuner_utils.yellowfin import YFOptimizer
 
@@ -42,7 +43,7 @@ FLAGS = gflags.FLAGS
 
 
 def sequential_only():
-    return FLAGS.model_type == "RNN" or FLAGS.model_type == "CBOW" or FLAGS.model_type == "ChoiPyramid"
+    return FLAGS.model_type == "RNN" or FLAGS.model_type == "CBOW" or FLAGS.model_type == "ChoiPyramid" or FLAGS.model_type == "EESC"
 
 
 def pad_from_left():
@@ -343,7 +344,7 @@ def get_flags():
     # Model architecture settings.
     gflags.DEFINE_enum(
         "model_type", "RNN", [
-            "CBOW", "RNN", "SPINN", "RLSPINN", "ChoiPyramid"], "")
+            "CBOW", "RNN", "SPINN", "RLSPINN", "ChoiPyramid", "EESC"], "")
     gflags.DEFINE_integer("gpu", -1, "")
     gflags.DEFINE_integer("model_dim", 8, "")
     gflags.DEFINE_integer("word_embedding_dim", 8, "")
@@ -630,7 +631,7 @@ def flag_defaults(FLAGS, load_log_flags=False):
     if not FLAGS.metrics_path:
         FLAGS.metrics_path = FLAGS.log_path
 
-    if FLAGS.model_type == "CBOW" or FLAGS.model_type == "RNN" or FLAGS.model_type == "Pyramid" or FLAGS.model_type == "ChoiPyramid":
+    if FLAGS.model_type == "CBOW" or FLAGS.model_type == "RNN" or FLAGS.model_type == "Pyramid" or FLAGS.model_type == "ChoiPyramid" or FLAGS.model_type == "EESC":
         FLAGS.num_samples = 0
 
     if not torch.cuda.is_available():
@@ -657,6 +658,8 @@ def init_model(
         build_model = spinn.rl_spinn.build_model
     elif FLAGS.model_type == "ChoiPyramid":
         build_model = spinn.choi_pyramid.build_model
+    elif FLAGS.model_type == "EESC":
+        build_model = spinn.eesc.build_model
     else:
         raise NotImplementedError
 

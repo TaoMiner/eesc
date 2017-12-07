@@ -560,6 +560,7 @@ class EncodeGRU(GRU):
             mix=True,
             *args,
             **kwargs):
+        self.mix = False
         if mix and bidirectional:
             self.mix = True
             assert model_dim % 4 == 0, "Model dim must be divisible by 4 to use bidirectional GRU encoder."
