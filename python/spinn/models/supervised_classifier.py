@@ -56,7 +56,7 @@ def evaluate(FLAGS, model, eval_set, log_entry,
     total_tokens = 0
     start = time.time()
 
-    if FLAGS.model_type in ["Pyramid", "ChoiPyramid"]:
+    if FLAGS.model_type in ["Pyramid", "ChoiPyramid", "EESC"]:
         pyramid_temperature_multiplier = FLAGS.pyramid_temperature_decay_per_10k_steps ** (
             step / 10000.0)
         if FLAGS.pyramid_temperature_cycle_length > 0.0:
@@ -83,7 +83,7 @@ def evaluate(FLAGS, model, eval_set, log_entry,
             example_lengths=eval_num_transitions_batch)
 
         # TODO: Restore support in Pyramid if using.
-        can_sample = FLAGS.model_type in ["ChoiPyramid"] or (
+        can_sample = FLAGS.model_type in ["ChoiPyramid", "EESC"] or (
             FLAGS.model_type == "SPINN" and FLAGS.use_internal_parser)
         if show_sample and can_sample:
             tmp_samples = model.get_samples(
@@ -240,7 +240,7 @@ def train_loop(
         # Reset cached gradients.
         optimizer.zero_grad()
 
-        if FLAGS.model_type in ["Pyramid", "ChoiPyramid"]:
+        if FLAGS.model_type in ["Pyramid", "ChoiPyramid", "EESC"]:
             pyramid_temperature_multiplier = FLAGS.pyramid_temperature_decay_per_10k_steps ** (
                 step / 10000.0)
             if FLAGS.pyramid_temperature_cycle_length > 0.0:

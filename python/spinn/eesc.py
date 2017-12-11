@@ -330,12 +330,12 @@ class BinaryTreeLSTM(nn.Module):
         select_mask_expand = select_mask.unsqueeze(2)
         select_mask_cumsum = select_mask.cumsum(1)
         left_mask = 1 - select_mask_cumsum
-        left_mask_expand = left_mask.unsqueeze(2)
+        left_mask_expand = left_mask.unsqueeze(2).detach()
         right_mask_leftmost_col = Variable(
             select_mask_cumsum.data.new(new_h.size(0), 1).zero_())
         right_mask = torch.cat(
             [right_mask_leftmost_col, select_mask_cumsum[:, :-1]], dim=1)
-        right_mask_expand = right_mask.unsqueeze(2)
+        right_mask_expand = right_mask.unsqueeze(2).detach()
         new_h = (select_mask_expand * new_h
                  + left_mask_expand * old_h_left
                  + right_mask_expand * old_h_right)
