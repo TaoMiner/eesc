@@ -9,8 +9,9 @@ import torch.nn as nn
 from torch.nn import init
 from torch.autograd import Variable
 import torch.nn.functional as F
+from torch.nn.init import kaiming_normal
 
-from spinn.util.blocks import Embed, to_gpu, MLP, Linear, HeKaimingInitializer, LayerNormalization
+from spinn.util.blocks import Embed, to_gpu, MLP, Linear, LayerNormalization
 from spinn.util.misc import Args, Vocab
 
 
@@ -23,6 +24,7 @@ def build_model(data_manager, initial_embeddings, vocab_size,
                      word_embedding_dim=FLAGS.word_embedding_dim,
                      vocab_size=vocab_size,
                      initial_embeddings=initial_embeddings,
+                     fine_tune_loaded_embeddings=FLAGS.fine_tune_loaded_embeddings,
                      num_classes=num_classes,
                      embedding_keep_rate=FLAGS.embedding_keep_rate,
                      use_sentence_pair=use_sentence_pair,
@@ -46,6 +48,7 @@ class ChoiPyramid(nn.Module):
                  use_product_feature=None,
                  use_difference_feature=None,
                  initial_embeddings=None,
+                 fine_tune_loaded_embeddings=None,
                  num_classes=None,
                  embedding_keep_rate=None,
                  use_sentence_pair=False,
@@ -76,7 +79,8 @@ class ChoiPyramid(nn.Module):
         self.embed = Embed(
             word_embedding_dim,
             vocab.size,
-            vectors=vocab.vectors)
+            vectors=vocab.vectors,
+            fine_tune=fine_tune_loaded_embeddings)
 
         self.binary_tree_lstm = BinaryTreeLSTM(
             word_embedding_dim,
@@ -267,10 +271,10 @@ class BinaryTreeLSTM(nn.Module):
             hidden_dim, composition_ln=composition_ln)
 
         # TODO: Add something to blocks to make this use case more elegant.
-        self.comp_query = Linear(
-            initializer=HeKaimingInitializer)(
+        self.comp_query = Linear()(
             in_features=hidden_dim,
-            out_features=1)
+            out_features=1,
+            bias=False)
         self.trainable_temperature = trainable_temperature
         if self.trainable_temperature:
             self.temperature_param = nn.Parameter(
@@ -341,7 +345,7 @@ class BinaryTreeLSTM(nn.Module):
         length_mask = sequence_mask(sequence_length=length,
                                     max_length=max_depth)
         select_masks = []
-        state = input.chunk(num_chunks=2, dim=2)
+        state = input.chunk(2, dim=2)
         nodes = []
         # For one or two-word trees where we never compute a temperature
         temperature_to_display = -1.0
@@ -449,7 +453,7 @@ def convert_to_one_hot(indices, num_classes):
 
 def masked_softmax(logits, mask=None):
     eps = 1e-20
-    probs = F.softmax(logits)
+    probs = F.softmax(logits, dim=1)
     if mask is not None:
         mask = mask.float()
         probs = probs * mask + eps
@@ -513,13 +517,10 @@ def sequence_mask(sequence_length, max_length=None):
 
 
 class BinaryTreeLSTMLayer(nn.Module):
-    # TODO: Unify with SimpleTreeLSTM
-
     def __init__(self, hidden_dim, composition_ln=False):
         super(BinaryTreeLSTMLayer, self).__init__()
         self.hidden_dim = hidden_dim
-        self.comp_linear = Linear(
-            initializer=HeKaimingInitializer)(
+        self.comp_linear = Linear()(
             in_features=2 * hidden_dim,
             out_features=5 * hidden_dim)
         self.composition_ln = composition_ln
@@ -553,7 +554,7 @@ class BinaryTreeLSTMLayer(nn.Module):
 
         hlr_cat = torch.cat([hl, hr], dim=2)
         treelstm_vector = apply_nd(fn=self.comp_linear, input=hlr_cat)
-        i, fl, fr, u, o = treelstm_vector.chunk(num_chunks=5, dim=2)
+        i, fl, fr, u, o = treelstm_vector.chunk(5, dim=2)
         c = (cl * (fl + 1).sigmoid() + cr * (fr + 1).sigmoid()
              + u.tanh() * i.sigmoid())
         h = o.sigmoid() * c.tanh()

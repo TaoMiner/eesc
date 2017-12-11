@@ -7,12 +7,12 @@ import torch
 import torch.nn as nn
 from torch.autograd import Variable
 import torch.nn.functional as F
+from torch.nn.init import kaiming_normal
 
 from spinn.util.blocks import Embed, Linear, MLP
 from spinn.util.blocks import bundle, lstm, to_gpu, unbundle
 from spinn.util.blocks import LayerNormalization
 from spinn.util.misc import Example, Vocab
-from spinn.util.blocks import HeKaimingInitializer
 from spinn.util.catalan import ShiftProbabilities
 
 from spinn.data import T_SHIFT, T_REDUCE, T_SKIP
@@ -28,6 +28,7 @@ def build_model(data_manager, initial_embeddings, vocab_size,
         word_embedding_dim=FLAGS.word_embedding_dim,
         vocab_size=vocab_size,
         initial_embeddings=initial_embeddings,
+        fine_tune_loaded_embeddings=FLAGS.fine_tune_loaded_embeddings,
         num_classes=num_classes,
         embedding_keep_rate=FLAGS.embedding_keep_rate,
         tracking_lstm_hidden_dim=FLAGS.tracking_lstm_hidden_dim,
@@ -45,8 +46,6 @@ def build_model(data_manager, initial_embeddings, vocab_size,
         mlp_ln=FLAGS.mlp_ln,
         context_args=context_args,
         composition_args=composition_args,
-        detach=FLAGS.transition_detach,
-        evolution=FLAGS.evolution,
     )
 
 
@@ -71,7 +70,7 @@ class Tracker(nn.Module):
             self.buf = Linear()(size, 4 * tracker_size, bias=True)
             self.stack1 = Linear()(size, 4 * tracker_size, bias=False)
             self.stack2 = Linear()(size, 4 * tracker_size, bias=False)
-            self.lateral = Linear(initializer=HeKaimingInitializer)(
+            self.lateral = Linear(initializer=kaiming_normal)(
                 tracker_size, 4 * tracker_size, bias=False)
             self.state_size = tracker_size
         else:
@@ -136,8 +135,6 @@ class SPINN(nn.Module):
 
         # Optional debug mode.
         self.debug = False
-        self.detach = args.detach
-        self.evolution = args.evolution
 
         self.transition_weight = args.transition_weight
 
@@ -160,7 +157,8 @@ class SPINN(nn.Module):
                         2 if predict_use_cell else self.tracker.state_size
                 else:
                     tinp_size = self.tracker.state_size
-                self.transition_net = nn.Linear(tinp_size, 2)
+                self.transition_net = Linear()(
+                    tinp_size, 2)
 
         self.choices = np.array([T_SHIFT, T_REDUCE], dtype=np.int32)
 
@@ -255,7 +253,7 @@ class SPINN(nn.Module):
         return _preds, _invalid
 
     def predict_actions(self, transition_output):
-        transition_logdist = F.log_softmax(transition_output)
+        transition_logdist = F.log_softmax(transition_output, dim=1)
         transition_preds = transition_logdist.data.cpu().numpy().argmax(axis=1)
         return transition_logdist, transition_preds
 
@@ -336,13 +334,6 @@ class SPINN(nn.Module):
     def loss_phase_hook(self):
         pass
 
-    def evolution_params(self):
-        """
-        The parameters trained by evolution strategy
-        """
-        return [(k, v) for k, v in zip(self.transition_net.state_dict(
-        ).keys(), self.transition_net.state_dict().values())]
-
     def run(self, inp_transitions, run_internal_parser=False,
             use_internal_parser=False, validate_transitions=True):
         transition_loss = None
@@ -404,10 +395,7 @@ class SPINN(nn.Module):
                     transition_inp = [tracker_h]
                     if self.tracker.lateral_tracking and self.predict_use_cell:
                         transition_inp += [tracker_c]
-                    if self.detach or self.evolution:
-                        transition_inp = torch.cat(transition_inp, 1).detach()
-                    else:
-                        transition_inp = torch.cat(transition_inp, 1)
+                    transition_inp = torch.cat(transition_inp, 1)
 
                     transition_output = self.transition_net(transition_inp)
 
@@ -459,7 +447,8 @@ class SPINN(nn.Module):
             # Pre-Action Phase
             # ================
 
-            # TODO: See if PyTorch's 'Advanced Indexing for Tensors and Variables' features would simplify this.
+            # TODO: See if PyTorch's 'Advanced Indexing for Tensors and
+            # Variables' features would simplify this.
 
             # For SHIFT
             s_stacks, s_tops, s_trackings, s_idxs = [], [], [], []
@@ -567,6 +556,7 @@ class BaseModel(nn.Module):
                  word_embedding_dim=None,
                  vocab_size=None,
                  initial_embeddings=None,
+                 fine_tune_loaded_embeddings=None,
                  num_classes=None,
                  embedding_keep_rate=None,
                  tracking_lstm_hidden_dim=4,
@@ -587,8 +577,6 @@ class BaseModel(nn.Module):
                  classifier_keep_rate=None,
                  context_args=None,
                  composition_args=None,
-                 detach=None,
-                 evolution=None,
                  **kwargs
                  ):
         super(BaseModel, self).__init__()
@@ -629,7 +617,8 @@ class BaseModel(nn.Module):
         self.embed = Embed(
             word_embedding_dim,
             vocab.size,
-            vectors=vocab.vectors)
+            vectors=vocab.vectors,
+            fine_tune=fine_tune_loaded_embeddings)
 
         self.input_dim = context_args.input_dim
 

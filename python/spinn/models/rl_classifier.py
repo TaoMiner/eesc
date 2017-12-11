@@ -10,7 +10,7 @@ import numpy as np
 
 from spinn.util import afs_safe_logger
 from spinn.util.data import SimpleProgressBar
-from spinn.util.blocks import get_l2_loss, the_gpu, to_gpu
+from spinn.util.blocks import the_gpu, to_gpu
 from spinn.util.misc import Accumulator, EvalReporter
 from spinn.util.misc import recursively_set_device
 from spinn.util.logging import stats, train_accumulate, create_log_formatter
@@ -78,14 +78,11 @@ def evaluate(FLAGS, model, eval_set, log_entry,
             # Only show one sample, regardless of the number of batches.
             show_sample = False
 
-        # Normalize output.
-        logits = F.log_softmax(output)
-
         # Calculate class accuracy.
         target = torch.from_numpy(eval_y_batch).long()
 
         # get the index of the max log-probability
-        pred = logits.data.max(1, keepdim=False)[1].cpu()
+        pred = output.data.max(1, keepdim=False)[1].cpu()
 
         eval_accumulate(model, A, batch)
         A.add('class_correct', pred.eq(target).sum())
@@ -162,6 +159,7 @@ def train_loop(
         FLAGS,
         model,
         optimizer,
+        sparse_optimizer,
         trainer,
         training_data_iter,
         eval_iterators,
@@ -198,9 +196,11 @@ def train_loop(
     log_entry = pb.SpinnEntry()
     for step in range(step, FLAGS.training_steps):
         if (step - best_dev_step) > FLAGS.early_stopping_steps_to_wait:
-            logger.Log('No improvement after ' + str(FLAGS.early_stopping_steps_to_wait) + ' steps. Stopping training.')
+            logger.Log('No improvement after ' +
+                       str(FLAGS.early_stopping_steps_to_wait) +
+                       ' steps. Stopping training.')
             break
-            
+
         model.train()
         log_entry.Clear()
         log_entry.step = step
@@ -216,6 +216,8 @@ def train_loop(
 
         # Reset cached gradients.
         optimizer.zero_grad()
+        if sparse_optimizer is not None:
+            sparse_optimizer.zero_grad()
 
         temperature = math.sin(
             math.pi /
@@ -245,34 +247,24 @@ def train_loop(
                        validate_transitions=FLAGS.validate_transitions
                        )
 
-        # Normalize output.
-        logits = F.log_softmax(output)
-
         # Calculate class accuracy.
         target = torch.from_numpy(y_batch).long()
 
         # get the index of the max log-probability
-        pred = logits.data.max(1, keepdim=False)[1].cpu()
+        pred = output.data.max(1, keepdim=False)[1].cpu()
 
         class_acc = pred.eq(target).sum() / float(target.size(0))
 
         # Calculate class loss.
-        xent_loss = nn.NLLLoss()(
-            logits, to_gpu(Variable(target, volatile=False)))
+        xent_loss = nn.CrossEntropyLoss()(output, to_gpu(Variable(target, volatile=False)))
 
         # Optionally calculate transition loss.
         transition_loss = model.transition_loss if hasattr(
             model, 'transition_loss') else None
 
-        # Extract L2 Cost
-        l2_loss = get_l2_loss(
-            model, FLAGS.l2_lambda) if FLAGS.use_l2_loss else None
-
         # Accumulate Total Loss Variable
         total_loss = 0.0
         total_loss += xent_loss
-        if l2_loss is not None:
-            total_loss += l2_loss
         if transition_loss is not None and model.optimize_transition_loss:
             total_loss += transition_loss
         aux_loss = auxiliary_loss(model)
@@ -282,10 +274,7 @@ def train_loop(
         total_loss.backward()
 
         # Hard Gradient Clipping
-        clip = FLAGS.clipping_max_value
-        for p in model.parameters():
-            if p.requires_grad:
-                p.grad.data.clamp_(min=-clip, max=clip)
+        nn.utils.clip_grad_norm([param for name, param in model.named_parameters() if name not in ["embed.embed.weight"]], FLAGS.clipping_max_value)
 
         # Learning Rate Decay
         if FLAGS.actively_decay_learning_rate:
@@ -294,6 +283,8 @@ def train_loop(
 
         # Gradient descent step.
         optimizer.step()
+        if sparse_optimizer is not None:
+            sparse_optimizer.step()
 
         end = time.time()
 
@@ -312,7 +303,6 @@ def train_loop(
             progress_bar.finish()
 
             A.add('xent_cost', xent_loss.data[0])
-            A.add('l2_cost', l2_loss.data[0])
             stats(model, optimizer, A, step, log_entry)
             should_log = True
 
@@ -372,13 +362,21 @@ def train_loop(
                     best_dev_step = step
                     logger.Log(
                         "Checkpointing with new best dev accuracy of %f" % acc)
-                    trainer.save(best_checkpoint_path, step, best_dev_error, best_dev_step)
+                    trainer.save(
+                        best_checkpoint_path,
+                        step,
+                        best_dev_error,
+                        best_dev_step)
             progress_bar.reset()
 
         if step > FLAGS.ckpt_step and step % FLAGS.ckpt_interval_steps == 0:
             should_log = True
             logger.Log("Checkpointing.")
-            trainer.save(standard_checkpoint_path, step, best_dev_error, best_dev_step)
+            trainer.save(
+                standard_checkpoint_path,
+                step,
+                best_dev_error,
+                best_dev_step)
 
         if should_log:
             logger.LogEntry(log_entry)
@@ -413,7 +411,7 @@ def run(only_forward=False):
     vocab_size = len(vocabulary)
     num_classes = len(set(data_manager.LABEL_MAP.values()))
 
-    model, optimizer, trainer = init_model(
+    model, optimizer, sparse_optimizer, trainer = init_model(
         FLAGS,
         logger,
         initial_embeddings,
@@ -430,13 +428,15 @@ def run(only_forward=False):
     # Load checkpoint if available.
     if FLAGS.load_best and os.path.isfile(best_checkpoint_path):
         logger.Log("Found best checkpoint, restoring.")
-        step, best_dev_error, best_dev_step = trainer.load(best_checkpoint_path, cpu=FLAGS.gpu < 0)
+        step, best_dev_error, best_dev_step = trainer.load(
+            best_checkpoint_path, cpu=FLAGS.gpu < 0)
         logger.Log(
             "Resuming at step: {} with best dev accuracy: {}".format(
                 step, 1. - best_dev_error))
     elif os.path.isfile(standard_checkpoint_path):
         logger.Log("Found checkpoint, restoring.")
-        step, best_dev_error, best_dev_step = trainer.load(standard_checkpoint_path, cpu=FLAGS.gpu < 0)
+        step, best_dev_error, best_dev_step = trainer.load(
+            standard_checkpoint_path, cpu=FLAGS.gpu < 0)
         logger.Log(
             "Resuming at step: {} with best dev accuracy: {}".format(
                 step, 1. - best_dev_error))
@@ -484,6 +484,7 @@ def run(only_forward=False):
             FLAGS,
             model,
             optimizer,
+            sparse_optimizer,
             trainer,
             training_data_iter,
             eval_iterators,

@@ -17,7 +17,7 @@ from spinn.data.boolean import load_boolean_data
 from spinn.data.listops import load_listops_data
 from spinn.data.sst import load_sst_data, load_sst_binary_data
 from spinn.data.nli import load_nli_data
-from spinn.util.blocks import ModelTrainer, ModelTrainer_ES, bundle
+from spinn.util.blocks import ModelTrainer, bundle
 from spinn.util.blocks import EncodeGRU, IntraAttention, Linear, ReduceTreeGRU, ReduceTreeLSTM
 from spinn.util.misc import Args
 from spinn.util.logparse import parse_flags
@@ -28,8 +28,6 @@ import spinn.plain_rnn
 import spinn.cbow
 import spinn.choi_pyramid
 import spinn.eesc
-
-from tuner_utils.yellowfin import YFOptimizer
 
 # PyTorch
 import torch
@@ -149,7 +147,7 @@ def load_data_and_embeddings(
         else:
             # Load the data.
             raw_training_data = data_manager.load_data(
-                training_data_path, FLAGS.lowercase)
+                training_data_path, FLAGS.lowercase, eval_mode=False)
     else:
         raw_training_data = None
 
@@ -164,13 +162,14 @@ def load_data_and_embeddings(
         # Load the eval data.
         raw_eval_sets = []
         for path in eval_data_path.split(':'):
-            raw_eval_data = data_manager.load_data(path, FLAGS.lowercase)
+            raw_eval_data = data_manager.load_data(
+                path, FLAGS.lowercase, eval_mode=True)
             raw_eval_sets.append((path, raw_eval_data))
 
     # Prepare the vocabulary.
     if not data_manager.FIXED_VOCABULARY:
         logger.Log(
-            "In open vocabulary mode. Using loaded embeddings without fine-tuning.")
+            "Using loaded embeddings.")
         vocabulary = util.BuildVocabulary(
             raw_training_data,
             raw_eval_sets,
@@ -180,7 +179,7 @@ def load_data_and_embeddings(
             sentence_pair_data=data_manager.SENTENCE_PAIR_DATA)
     else:
         vocabulary = data_manager.FIXED_VOCABULARY
-        logger.Log("In fixed vocabulary mode. Training embeddings.")
+        logger.Log("In fixed vocabulary mode. Training embeddings from scratch.")
 
     # Load pretrained embeddings.
     if FLAGS.embedding_data_path:
@@ -339,7 +338,11 @@ def get_flags():
         "Seed shuffling of eval data.")
     gflags.DEFINE_string("embedding_data_path", None,
                          "If set, load GloVe-formatted embeddings from here.")
+
     gflags.DEFINE_enum("embedding_format", "t", ["t", "b"], "load embedding from text file or binary file.")
+
+    gflags.DEFINE_boolean("fine_tune_loaded_embeddings", False,
+                          "If set, backpropagate into embeddings even when initializing from pretrained.")
 
     # Model architecture settings.
     gflags.DEFINE_enum(
@@ -356,9 +359,8 @@ def get_flags():
         "Constrain predicted transitions to ones that give a valid parse tree.")
     gflags.DEFINE_float(
         "embedding_keep_rate",
-        0.9,
+        1.0,
         "Used for dropout on transformed embeddings and in the encoder RNN.")
-    gflags.DEFINE_boolean("use_l2_loss", True, "")
     gflags.DEFINE_boolean("use_difference_feature", True, "")
     gflags.DEFINE_boolean("use_product_feature", True, "")
 
@@ -399,7 +401,7 @@ def get_flags():
         None,
         "If set, add a scalar trained temperature parameter.")
     gflags.DEFINE_float("pyramid_temperature_decay_per_10k_steps",
-                        0.5, "What it says on the box.")
+                        0.5, "What it says on the box. Does not impact SparseAdam (for word embedding fine-tuning).")
     gflags.DEFINE_float(
         "pyramid_temperature_cycle_length",
         0.0,
@@ -481,7 +483,7 @@ def get_flags():
         "mlp_dim",
         1024,
         "Dimension of intermediate MLP layers.")
-    gflags.DEFINE_integer("num_mlp_layers", 2, "Number of MLP layers.")
+    gflags.DEFINE_integer("num_mlp_layers", 1, "Number of MLP layers.")
     gflags.DEFINE_boolean(
         "mlp_ln",
         True,
@@ -490,9 +492,6 @@ def get_flags():
                         "Used for dropout in the semantic task classifier.")
 
     # Optimization settings.
-    gflags.DEFINE_enum(
-        "optimizer_type", "Adam", [
-            "Adam", "RMSprop", "YellowFin"], "")
     gflags.DEFINE_integer(
         "training_steps",
         500000,
@@ -509,10 +508,6 @@ def get_flags():
         "Used in optimizer.")
     gflags.DEFINE_float("clipping_max_value", 5.0, "")
     gflags.DEFINE_float("l2_lambda", 1e-5, "")
-    gflags.DEFINE_float(
-        "init_range",
-        0.005,
-        "Mainly used for softmax parameters. Range for uniform random init.")
 
     # Display settings.
     gflags.DEFINE_integer(
@@ -558,35 +553,6 @@ def get_flags():
         "otherwise use predicted transitions. Note that when predicting transitions but not using them, the "
         "reported predictions will look very odd / not valid.")  # TODO: Remove.
 
-    # Evolution Strategy
-    gflags.DEFINE_boolean(
-        "transition_detach",
-        False,
-        "Detach transition decision from backprop.")
-    gflags.DEFINE_boolean("evolution", False, "Use evolution to train parser.")
-    gflags.DEFINE_float(
-        "es_sigma",
-        0.05,
-        "Standard deviation for Gaussian noise.")
-    gflags.DEFINE_integer(
-        "es_num_episodes",
-        2,
-        "Number of simultaneous episodes to run.")
-    gflags.DEFINE_integer(
-        "es_num_roots",
-        2,
-        "Number of simultaneous episodes to run.")
-    gflags.DEFINE_integer("es_episode_length", 1000, "Length of each episode.")
-    gflags.DEFINE_integer("es_steps", 1000, "Number of evolution steps.")
-    gflags.DEFINE_boolean(
-        "mirror",
-        False,
-        "Do mirrored/antithetic sampling. If doing mirrored sampling, number of perturbtations will be double es_num_episodes.")
-    gflags.DEFINE_float(
-        "eval_sample_size",
-        None,
-        "Percentage (eg 0.3) of batches to be sampled for evaluation during training (only for ES). If None, use all.")
-
 
 def flag_defaults(FLAGS, load_log_flags=False):
     if load_log_flags:
@@ -631,7 +597,7 @@ def flag_defaults(FLAGS, load_log_flags=False):
     if not FLAGS.metrics_path:
         FLAGS.metrics_path = FLAGS.log_path
 
-    if FLAGS.model_type == "CBOW" or FLAGS.model_type == "RNN" or FLAGS.model_type == "Pyramid" or FLAGS.model_type == "ChoiPyramid" or FLAGS.model_type == "EESC":
+    if FLAGS.model_type == "CBOW" or FLAGS.model_type == "RNN" or FLAGS.model_type == "ChoiPyramid" or FLAGS.model_type == "EESC":
         FLAGS.num_samples = 0
 
     if not torch.cuda.is_available():
@@ -709,9 +675,6 @@ def init_model(
     composition_args.wrap_items = lambda x: torch.cat(x, 0)
     composition_args.extract_h = lambda x: x
 
-    composition_args.detach = FLAGS.transition_detach
-    composition_args.evolution = FLAGS.evolution
-
     if FLAGS.reduce == "treelstm":
         assert FLAGS.model_dim % 2 == 0, 'model_dim must be an even number.'
         if FLAGS.model_dim != FLAGS.word_embedding_dim:
@@ -746,27 +709,18 @@ def init_model(
                         num_classes, FLAGS, context_args, composition_args)
 
     # Build optimizer.
-    if FLAGS.optimizer_type == "Adam":
-        optimizer = optim.Adam(model.parameters(), lr=FLAGS.learning_rate,
-                               betas=(0.9, 0.999), eps=1e-08)
-    elif FLAGS.optimizer_type == "RMSprop":
-        optimizer = optim.RMSprop(
-            model.parameters(),
-            lr=FLAGS.learning_rate,
-            eps=1e-08)
-    elif FLAGS.optimizer_type == "YellowFin":
-        optimizer = YFOptimizer(model.parameters(), lr=FLAGS.learning_rate)
-        if FLAGS.actively_decay_learning_rate:
-            logger.Log(
-                "WARNING: Ignoring actively_decay_learning_rate and learning_rate_decay_per_10k_steps. Not implemeted for YellowFin.")
+    optimizer = optim.Adam([param for name, param in model.named_parameters() if name not in ["embed.embed.weight"]], lr=FLAGS.learning_rate, 
+        betas=(0.9, 0.999), eps=1e-08)
+
+    sparse_parameters = [param for name, param in model.named_parameters() if name in ["embed.embed.weight"]]
+    if len(sparse_parameters) > 0:
+        sparse_optimizer = optim.SparseAdam(sparse_parameters, lr=FLAGS.learning_rate, 
+            betas=(0.9, 0.999), eps=1e-08)
     else:
-        raise NotImplementedError
+        sparse_optimizer = None
 
     # Build trainer.
-    if FLAGS.evolution:
-        trainer = ModelTrainer_ES(model, optimizer)
-    else:
-        trainer = ModelTrainer(model, optimizer)
+    trainer = ModelTrainer(model, optimizer, sparse_optimizer)
 
     # Print model size.
     logger.Log("Architecture: {}".format(model))
@@ -778,4 +732,4 @@ def init_model(
     if logfile_header:
         logfile_header.total_params = int(total_params)
 
-    return model, optimizer, trainer
+    return model, optimizer, sparse_optimizer, trainer
