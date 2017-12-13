@@ -10,7 +10,7 @@ from torch.nn import init
 from torch.autograd import Variable
 import torch.nn.functional as F
 
-from spinn.util.blocks import Embed, to_gpu, MLP, Linear, HeKaimingInitializer, LayerNormalization
+from spinn.util.blocks import Embed, to_gpu, MLP, Linear, LayerNormalization
 from spinn.util.misc import Args, Vocab
 
 
@@ -265,11 +265,12 @@ class BinaryTreeLSTM(nn.Module):
         self.intra_attention = intra_attention
         self.treelstm_layer = BinaryTreeLSTMLayer(
             hidden_dim, composition_ln=composition_ln)
+        self.non_comp_layer = NonCompLayer(hidden_dim=hidden_dim)
+        self.comp_query_layer = CompQueryLayer(hidden_dim=hidden_dim)
 
         # TODO: Add something to blocks to make this use case more elegant.
-        self.comp_query = Linear(
-            initializer=HeKaimingInitializer)(
-            in_features=3*hidden_dim,
+        self.comp_query = Linear()(
+            in_features=hidden_dim,
             out_features=1)
         self.trainable_temperature = trainable_temperature
         if self.trainable_temperature:
@@ -287,25 +288,28 @@ class BinaryTreeLSTM(nn.Module):
 
     def select_composition(
             self,
-            old_state,
-            new_state,
+            state,
             mask,
             temperature_multiplier=1.0):
-        new_h, new_c = new_state
-        old_h, old_c = old_state
-        old_h_left, old_h_right = old_h[:, :-1, :], old_h[:, 1:, :]
-        old_c_left, old_c_right = old_c[:, :-1, :], old_c[:, 1:, :]
+        h, c = state
+        h_left, h_right = h[:, :-1, :], h[:, 1:, :]
         # extract h(-1) and h(+1)
-        old_h1 = old_h[:,:-1,:]
-        old_h2 = old_h[:,-1:,:]
-        new_h_size = new_h.size()
-        tmp_h = torch.cat([old_h1,old_h1,new_h],dim=2)
-        tmp_h1 = tmp_h.view(new_h_size[0], -1, new_h_size[-1])
-        tmp_h2 = torch.cat([tmp_h1,old_h2], dim=1)[:,1:,:]
-        tmp_h3 = tmp_h2.contiguous().view(new_h_size[0], -1, 3*new_h_size[-1])
-        comp_weights = dot_nd(
+        tmp_h = torch.cat([h_left, h_right],dim=2).contiguous()
+        tmp_h2 = self.comp_query_layer(tmp_h)
+        # batch_size * seq_length
+        solid_weights = dot_nd(
             query=self.comp_query.weight.squeeze(),
-            candidates=tmp_h3)
+            candidates=tmp_h2)
+        free_weights = 1 - solid_weights
+        tmp_free_col = Variable(
+            free_weights.data.new(free_weights.size(0), 1).zero_())
+        tmp_left_free = torch.cat(
+            [tmp_free_col, free_weights[:, :-1]], dim=1)
+        tmp_right_free = torch.cat(
+            [free_weights[:, 1:], tmp_free_col], dim=1)
+        tmp_free = (tmp_left_free+tmp_right_free)/2
+        # borrow the algorithm of f1 score
+        comp_weights = 2*tmp_free*solid_weights/(tmp_free+solid_weights)
 
         if self.training:
             temperature = temperature_multiplier
@@ -327,23 +331,8 @@ class BinaryTreeLSTM(nn.Module):
             select_mask = greedy_select(logits=comp_weights, mask=mask)
             select_mask = select_mask.float()
             temperature_to_display = None
-        select_mask_expand = select_mask.unsqueeze(2)
-        select_mask_cumsum = select_mask.cumsum(1)
-        left_mask = 1 - select_mask_cumsum
-        left_mask_expand = left_mask.unsqueeze(2).detach()
-        right_mask_leftmost_col = Variable(
-            select_mask_cumsum.data.new(new_h.size(0), 1).zero_())
-        right_mask = torch.cat(
-            [right_mask_leftmost_col, select_mask_cumsum[:, :-1]], dim=1)
-        right_mask_expand = right_mask.unsqueeze(2).detach()
-        new_h = (select_mask_expand * new_h
-                 + left_mask_expand * old_h_left
-                 + right_mask_expand * old_h_right)
-        new_c = (select_mask_expand * new_c
-                 + left_mask_expand * old_c_left
-                 + right_mask_expand * old_c_right)
-        selected_h = (select_mask_expand * new_h).sum(1)
-        return new_h, new_c, select_mask, selected_h, temperature_to_display
+
+        return solid_weights, free_weights, select_mask, temperature_to_display
 
     def forward(self, input, length, temperature_multiplier=1.0):
         max_depth = input.size(1)
@@ -357,20 +346,45 @@ class BinaryTreeLSTM(nn.Module):
         if self.intra_attention:
             nodes.append(state[0])
         for i in range(max_depth - 1):
-            h, c = state
-            l = (h[:, :-1, :], c[:, :-1, :])
-            r = (h[:, 1:, :], c[:, 1:, :])
-            new_state = self.treelstm_layer(l=l, r=r)
+            # revised
             if i < max_depth - 2:
-                # We don't need to greedily select the composition in the
-                # last iteration, since it has only one option left.
-                new_h, new_c, select_mask, selected_h, temperature_to_display = self.select_composition(
-                    old_state=state, new_state=new_state,
-                    mask=length_mask[:, i + 1:], temperature_multiplier=temperature_multiplier)
+                solid_weights, free_weights, select_mask, temperature_to_display = self.select_composition(
+                    state, mask=length_mask[:, i + 1:], temperature_multiplier=temperature_multiplier)
+
+                select_mask_expand = select_mask.unsqueeze(2)
+                h, c = state
+                l = (h[:, :-1, :], c[:, :-1, :])
+                r = (h[:, 1:, :], c[:, 1:, :])
+                selected_l = l * select_mask_expand
+                selected_r = r * select_mask_expand
+                comp_new_state = self.treelstm_layer(l=selected_l, r=selected_r)
+                non_comp_new_state = self.non_comp_layer(l=selected_l, r=selected_r)
+                solid_weights_expand = solid_weights.unsqueeze(2)
+                free_weights_expand = free_weights.unsqueeze(2)
+
+                comp_state = solid_weights_expand * comp_new_state + free_weights_expand * non_comp_new_state
+                (comp_h, comp_c) = comp_state
+
+                select_mask_cumsum = select_mask.cumsum(1)
+                left_mask = 1 - select_mask_cumsum
+                left_mask_expand = left_mask.unsqueeze(2)
+                right_mask_leftmost_col = Variable(
+                    select_mask_cumsum.data.new(comp_h.size(0), 1).zero_())
+                right_mask = torch.cat(
+                    [right_mask_leftmost_col, select_mask_cumsum[:, :-1]], dim=1)
+                right_mask_expand = right_mask.unsqueeze(2)
+                new_h = (select_mask_expand * comp_h
+                         + left_mask_expand * l[0]
+                         + right_mask_expand * r[0])
+                new_c = (select_mask_expand * comp_c
+                         + left_mask_expand * l[1]
+                         + right_mask_expand * r[1])
+                selected_h = (select_mask_expand * comp_h).sum(1)
                 new_state = (new_h, new_c)
                 select_masks.append(select_mask)
                 if self.intra_attention:
                     nodes.append(selected_h)
+
             done_mask = length_mask[:, i + 1]
             state = self.update_state(old_state=state, new_state=new_state,
                                       done_mask=done_mask)
@@ -396,9 +410,6 @@ class BinaryTreeLSTM(nn.Module):
             h = (att_weights_expand * nodes).sum(1)
         assert h.size(1) == 1 and c.size(1) == 1
         return h.squeeze(1), c.squeeze(1), select_masks, temperature_to_display
-
-    # --- From Choi's 'basic.py' ---
-
 
 def apply_nd(fn, input):
     """
@@ -520,6 +531,44 @@ def sequence_mask(sequence_length, max_length=None):
     seq_length_expand = sequence_length.unsqueeze(1)
     return seq_range_expand < seq_length_expand
 
+class CompQueryLayer(nn.Module):
+    def __init__(self, hidden_dim, composition_ln=False):
+        super(CompQueryLayer, self).__init__()
+        self.fc = nn.Linear(2*hidden_dim, hidden_dim)
+        self.composition_ln = composition_ln
+        if composition_ln:
+            self.x_ln = LayerNormalization(2*hidden_dim)
+
+    def forward(self, x):
+        if self.composition_ln:
+            x = self.x_ln(x)
+        x = F.tanh(self.fc(x))
+        return x
+
+class NonCompLayer(nn.Module):
+    def __init__(self, hidden_dim, composition_ln=False):
+        super(NonCompLayer, self).__init__()
+        self.fc = nn.Linear(2*hidden_dim, hidden_dim)
+        self.composition_ln = composition_ln
+        if composition_ln:
+            self.left_h_ln = LayerNormalization(hidden_dim)
+            self.right_h_ln = LayerNormalization(hidden_dim)
+            self.left_c_ln = LayerNormalization(hidden_dim)
+            self.right_c_ln = LayerNormalization(hidden_dim)
+
+    def forward(self, l=None, r=None):
+        hl, cl = l
+        hr, cr = r
+        if self.composition_ln:
+            hl = self.left_h_ln(hl)
+            hr = self.right_h_ln(hr)
+            cl = self.left_c_ln(cl)
+            cr = self.right_c_ln(cr)
+        hlr_cat = torch.cat([hl, hr], dim=2)
+        h = F.tanh(self.fc(hlr_cat))
+        clr_cat = torch.cat([cl, cr], dim=2)
+        c = F.tanh(self.fc(clr_cat))
+        return h, c
 
 class BinaryTreeLSTMLayer(nn.Module):
     # TODO: Unify with SimpleTreeLSTM
@@ -527,8 +576,7 @@ class BinaryTreeLSTMLayer(nn.Module):
     def __init__(self, hidden_dim, composition_ln=False):
         super(BinaryTreeLSTMLayer, self).__init__()
         self.hidden_dim = hidden_dim
-        self.comp_linear = Linear(
-            initializer=HeKaimingInitializer)(
+        self.comp_linear = Linear()(
             in_features=2 * hidden_dim,
             out_features=5 * hidden_dim)
         self.composition_ln = composition_ln

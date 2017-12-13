@@ -423,7 +423,12 @@ def run(only_forward=False):
     vocabulary, initial_embeddings, training_data_iter, eval_iterators = \
         load_data_and_embeddings(FLAGS, data_manager, logger,
                                  FLAGS.training_data_path, FLAGS.eval_data_path)
-
+    '''
+    f = open("./vocab.txt", "w")
+    for k in vocabulary:
+        f.write("{0}\t{1}\n".format(k, vocabulary[k]))
+    f.close()
+    '''
     # Build model.
     vocab_size = len(vocabulary)
     num_classes = len(set(data_manager.LABEL_MAP.values()))

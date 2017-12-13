@@ -639,9 +639,11 @@ def init_model(
         encoder = Linear()(FLAGS.word_embedding_dim, FLAGS.model_dim)
         context_args.input_dim = FLAGS.model_dim
     elif FLAGS.encode == "gru":
+        # revised by ethanCao
+        # torch.nn.rnn expect input : seq_len x batch_size x model_dim
         context_args.reshape_input = lambda x, batch_size, seq_length: x.view(
-            batch_size, seq_length, -1)
-        context_args.reshape_context = lambda x, batch_size, seq_length: x.view(
+            batch_size, seq_length, -1).transpose(0,1).contiguous()
+        context_args.reshape_context = lambda x, batch_size, seq_length: x.transpose(0,1).contiguous().view(
             batch_size * seq_length, -1)
         context_args.input_dim = FLAGS.model_dim
         encoder = EncodeGRU(FLAGS.word_embedding_dim, FLAGS.model_dim,

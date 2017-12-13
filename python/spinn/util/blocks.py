@@ -369,7 +369,7 @@ class GRU(nn.Module):
     def forward(self, x, h0=None):
         bi = self.bi
         num_layers = self.num_layers
-        batch_size, seq_len = x.size()[:2]
+        seq_len, batch_size = x.size()[:2]
         model_dim = self.model_dim
 
         if self.reverse:
