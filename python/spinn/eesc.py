@@ -347,23 +347,25 @@ class BinaryTreeLSTM(nn.Module):
             nodes.append(state[0])
         for i in range(max_depth - 1):
             # revised
+            h, c = state
+            l = (h[:, :-1, :], c[:, :-1, :])
+            r = (h[:, 1:, :], c[:, 1:, :])
+            new_state = self.treelstm_layer(l=l, r=r)
             if i < max_depth - 2:
                 solid_weights, free_weights, select_mask, temperature_to_display = self.select_composition(
                     state, mask=length_mask[:, i + 1:], temperature_multiplier=temperature_multiplier)
 
                 select_mask_expand = select_mask.unsqueeze(2)
-                h, c = state
-                l = (h[:, :-1, :], c[:, :-1, :])
-                r = (h[:, 1:, :], c[:, 1:, :])
-                selected_l = l * select_mask_expand
-                selected_r = r * select_mask_expand
-                comp_new_state = self.treelstm_layer(l=selected_l, r=selected_r)
-                non_comp_new_state = self.non_comp_layer(l=selected_l, r=selected_r)
+
+                selected_l = (l[0] * select_mask_expand, l[1] * select_mask_expand)
+                selected_r = (r[0] * select_mask_expand, r[1] * select_mask_expand)
+                comp_new_h, comp_new_c = new_state[0], new_state[1]
+                non_comp_new_h, non_comp_new_c = self.non_comp_layer(l=selected_l, r=selected_r)
                 solid_weights_expand = solid_weights.unsqueeze(2)
                 free_weights_expand = free_weights.unsqueeze(2)
 
-                comp_state = solid_weights_expand * comp_new_state + free_weights_expand * non_comp_new_state
-                (comp_h, comp_c) = comp_state
+                comp_h = solid_weights_expand * comp_new_h + free_weights_expand * non_comp_new_h
+                comp_c = solid_weights_expand * comp_new_c + free_weights_expand * non_comp_new_c
 
                 select_mask_cumsum = select_mask.cumsum(1)
                 left_mask = 1 - select_mask_cumsum
@@ -384,7 +386,6 @@ class BinaryTreeLSTM(nn.Module):
                 select_masks.append(select_mask)
                 if self.intra_attention:
                     nodes.append(selected_h)
-
             done_mask = length_mask[:, i + 1]
             state = self.update_state(old_state=state, new_state=new_state,
                                       done_mask=done_mask)

@@ -2,10 +2,8 @@
 <project version="4">
   <component name="ChangeListManager">
     <list default="true" id="83426456-92f1-4a96-b5da-9d8aa5c40ffb" name="Default" comment="">
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/.idea/workspace.xml" afterPath="$PROJECT_DIR$/.idea/workspace.xml" />
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/python/spinn/eesc.py" afterPath="$PROJECT_DIR$/python/spinn/eesc.py" />
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/python/spinn/models/base.py" afterPath="$PROJECT_DIR$/python/spinn/models/base.py" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/python/spinn/models/supervised_classifier.py" afterPath="$PROJECT_DIR$/python/spinn/models/supervised_classifier.py" />
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/python/spinn/util/blocks.py" afterPath="$PROJECT_DIR$/python/spinn/util/blocks.py" />
     </list>
     <option name="EXCLUDED_CONVERTED_TO_IGNORED" value="true" />
@@ -24,8 +22,8 @@
       <file leaf-file-name="choi_pyramid.py" pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/python/spinn/choi_pyramid.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="357">
-              <caret line="367" column="44" lean-forward="true" selection-start-line="365" selection-start-column="16" selection-end-line="367" selection-end-column="44" />
+            <state relative-caret-position="196">
+              <caret line="355" column="12" lean-forward="true" selection-start-line="355" selection-start-column="12" selection-end-line="357" selection-end-column="53" />
               <folding>
                 <element signature="e#176#194#0" expanded="true" />
               </folding>
@@ -36,8 +34,8 @@
       <file leaf-file-name="eesc.py" pinned="false" current-in-tab="true">
         <entry file="file://$PROJECT_DIR$/python/spinn/eesc.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="27">
-              <caret line="365" column="45" lean-forward="false" selection-start-line="365" selection-start-column="35" selection-end-line="365" selection-end-column="45" />
+            <state relative-caret-position="349">
+              <caret line="357" column="43" lean-forward="false" selection-start-line="357" selection-start-column="43" selection-end-line="357" selection-end-column="43" />
               <folding>
                 <element signature="e#176#194#0" expanded="true" />
               </folding>
@@ -48,8 +46,8 @@
       <file leaf-file-name="blocks.py" pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/python/spinn/util/blocks.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="188">
-              <caret line="373" column="0" lean-forward="true" selection-start-line="373" selection-start-column="0" selection-end-line="373" selection-end-column="0" />
+            <state relative-caret-position="579">
+              <caret line="389" column="34" lean-forward="true" selection-start-line="389" selection-start-column="34" selection-end-line="389" selection-end-column="34" />
               <folding>
                 <element signature="e#0#18#0" expanded="true" />
               </folding>
@@ -70,8 +68,8 @@
       <file leaf-file-name="base.py" pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/python/spinn/models/base.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="403">
-              <caret line="654" column="54" lean-forward="false" selection-start-line="654" selection-start-column="54" selection-end-line="654" selection-end-column="54" />
+            <state relative-caret-position="574">
+              <caret line="659" column="28" lean-forward="false" selection-start-line="659" selection-start-column="28" selection-end-line="659" selection-end-column="28" />
               <folding>
                 <element signature="e#0#10#0" expanded="true" />
               </folding>
@@ -119,6 +117,7 @@
       <find>chunk</find>
       <find>model_type</find>
       <find>ChoiPyramid</find>
+      <find>encode_num</find>
     </findStrings>
   </component>
   <component name="Git.Settings">
@@ -129,8 +128,8 @@
       <list>
         <option value="$PROJECT_DIR$/scripts/make_snli_sweep.py" />
         <option value="$PROJECT_DIR$/python/spinn/util/data.py" />
-        <option value="$PROJECT_DIR$/python/spinn/util/blocks.py" />
         <option value="$PROJECT_DIR$/python/spinn/models/supervised_classifier.py" />
+        <option value="$PROJECT_DIR$/python/spinn/util/blocks.py" />
         <option value="$PROJECT_DIR$/python/spinn/models/base.py" />
         <option value="$PROJECT_DIR$/python/spinn/eesc.py" />
       </list>
@@ -517,14 +516,6 @@
     <watches-manager />
   </component>
   <component name="editorHistoryManager">
-    <entry file="file://$PROJECT_DIR$/python/spinn/models/supervised_classifier.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="9315">
-          <caret line="437" column="25" lean-forward="false" selection-start-line="437" selection-start-column="25" selection-end-line="437" selection-end-column="25" />
-          <folding />
-        </state>
-      </provider>
-    </entry>
     <entry file="file://$PROJECT_DIR$/python/spinn/models/base.py">
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="11615">
@@ -815,13 +806,11 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/python/spinn/util/blocks.py">
+    <entry file="file://$USER_HOME$/anaconda2/envs/tfTest/lib/python2.7/site-packages/torch/nn/modules/module.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="188">
-          <caret line="373" column="0" lean-forward="true" selection-start-line="373" selection-start-column="0" selection-end-line="373" selection-end-column="0" />
-          <folding>
-            <element signature="e#0#18#0" expanded="true" />
-          </folding>
+        <state relative-caret-position="671">
+          <caret line="57" column="13" lean-forward="false" selection-start-line="57" selection-start-column="13" selection-end-line="57" selection-end-column="13" />
+          <folding />
         </state>
       </provider>
     </entry>
@@ -833,28 +822,38 @@
         </state>
       </provider>
     </entry>
+    <entry file="file://$USER_HOME$/anaconda2/envs/tfTest/lib/python2.7/site-packages/torch/nn/modules/rnn.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="326">
+          <caret line="402" column="35" lean-forward="false" selection-start-line="402" selection-start-column="28" selection-end-line="402" selection-end-column="35" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
     <entry file="file://$PROJECT_DIR$/python/spinn/models/base.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="403">
-          <caret line="654" column="54" lean-forward="false" selection-start-line="654" selection-start-column="54" selection-end-line="654" selection-end-column="54" />
+        <state relative-caret-position="574">
+          <caret line="659" column="28" lean-forward="false" selection-start-line="659" selection-start-column="28" selection-end-line="659" selection-end-column="28" />
           <folding>
             <element signature="e#0#10#0" expanded="true" />
           </folding>
         </state>
       </provider>
     </entry>
-    <entry file="file://$USER_HOME$/anaconda2/envs/tfTest/lib/python2.7/site-packages/torch/nn/modules/module.py">
+    <entry file="file://$PROJECT_DIR$/python/spinn/util/blocks.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="671">
-          <caret line="57" column="13" lean-forward="false" selection-start-line="57" selection-start-column="13" selection-end-line="57" selection-end-column="13" />
-          <folding />
+        <state relative-caret-position="579">
+          <caret line="389" column="34" lean-forward="true" selection-start-line="389" selection-start-column="34" selection-end-line="389" selection-end-column="34" />
+          <folding>
+            <element signature="e#0#18#0" expanded="true" />
+          </folding>
         </state>
       </provider>
     </entry>
     <entry file="file://$PROJECT_DIR$/python/spinn/choi_pyramid.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="357">
-          <caret line="367" column="44" lean-forward="true" selection-start-line="365" selection-start-column="16" selection-end-line="367" selection-end-column="44" />
+        <state relative-caret-position="196">
+          <caret line="355" column="12" lean-forward="true" selection-start-line="355" selection-start-column="12" selection-end-line="357" selection-end-column="53" />
           <folding>
             <element signature="e#176#194#0" expanded="true" />
           </folding>
@@ -863,8 +862,8 @@
     </entry>
     <entry file="file://$PROJECT_DIR$/python/spinn/eesc.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="27">
-          <caret line="365" column="45" lean-forward="false" selection-start-line="365" selection-start-column="35" selection-end-line="365" selection-end-column="45" />
+        <state relative-caret-position="349">
+          <caret line="357" column="43" lean-forward="false" selection-start-line="357" selection-start-column="43" selection-end-line="357" selection-end-column="43" />
           <folding>
             <element signature="e#176#194#0" expanded="true" />
           </folding>
