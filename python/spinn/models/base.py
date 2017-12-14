@@ -1,8 +1,5 @@
 import sys
 import os
-import json
-import math
-import random
 import time
 
 import gflags
@@ -11,14 +8,13 @@ import numpy as np
 from spinn import util
 from spinn.data.arithmetic import load_sign_data
 from spinn.data.arithmetic import load_simple_data
-from spinn.data.dual_arithmetic import load_eq_data
-from spinn.data.dual_arithmetic import load_relational_data
+from spinn.data.dual_arithmetic import load_eq_data, load_relational_data
 from spinn.data.boolean import load_boolean_data
 from spinn.data.listops import load_listops_data
 from spinn.data.sst import load_sst_data, load_sst_binary_data
 from spinn.data.nli import load_nli_data
 from spinn.util.blocks import ModelTrainer, bundle
-from spinn.util.blocks import EncodeGRU, IntraAttention, Linear, ReduceTreeGRU, ReduceTreeLSTM
+from spinn.util.blocks import EncodeGRU, IntraAttention, Linear, ReduceTreeGRU, ReduceTreeLSTM, ReduceTensor
 from spinn.util.misc import Args
 from spinn.util.logparse import parse_flags
 
@@ -28,6 +24,7 @@ import spinn.plain_rnn
 import spinn.cbow
 import spinn.choi_pyramid
 import spinn.eesc
+import spinn.lms
 
 # PyTorch
 import torch
@@ -140,36 +137,19 @@ def load_data_and_embeddings(
         def choose_eval(x): return x.get('genre') == FLAGS.eval_genre
 
     if not FLAGS.expanded_eval_only_mode:
-        if FLAGS.data_type == "nli":
-            # Load the data.
-            raw_training_data = data_manager.load_data(
-                training_data_path, FLAGS.lowercase, choose_train)
-        else:
-            # Load the data.
-            raw_training_data = data_manager.load_data(
-                training_data_path, FLAGS.lowercase, eval_mode=False)
+        raw_training_data = data_manager.load_data(
+            training_data_path, FLAGS.lowercase, eval_mode=False)
     else:
         raw_training_data = None
 
-    if FLAGS.data_type == "nli":
-        # Load the eval data.
-        raw_eval_sets = []
-        for path in eval_data_path.split(':'):
-            raw_eval_data = data_manager.load_data(
-                path, FLAGS.lowercase, choose_eval)
-            raw_eval_sets.append((path, raw_eval_data))
-    else:
-        # Load the eval data.
-        raw_eval_sets = []
-        for path in eval_data_path.split(':'):
-            raw_eval_data = data_manager.load_data(
-                path, FLAGS.lowercase, eval_mode=True)
-            raw_eval_sets.append((path, raw_eval_data))
+    raw_eval_sets = []
+    for path in eval_data_path.split(':'):
+        raw_eval_data = data_manager.load_data(
+            path, FLAGS.lowercase, choose_eval, eval_mode=True)
+        raw_eval_sets.append((path, raw_eval_data))
 
     # Prepare the vocabulary.
     if not data_manager.FIXED_VOCABULARY:
-        logger.Log(
-            "Using loaded embeddings.")
         vocabulary = util.BuildVocabulary(
             raw_training_data,
             raw_eval_sets,
@@ -280,7 +260,7 @@ def get_flags():
     gflags.DEFINE_string(
         "load_log_path",
         None,
-        "A directory in which to write logs.")
+        "A directory from which to read logs.")
     gflags.DEFINE_boolean(
         "write_proto_to_log",
         False,
@@ -289,10 +269,6 @@ def get_flags():
         "ckpt_path", None, "Where to save/load checkpoints. Can be either "
         "a filename or a directory. In the latter case, the experiment name serves as the "
         "base for the filename.")
-    gflags.DEFINE_string(
-        "metrics_path",
-        None,
-        "A directory in which to write metrics.")
     gflags.DEFINE_integer(
         "ckpt_step",
         1000,
@@ -347,7 +323,7 @@ def get_flags():
     # Model architecture settings.
     gflags.DEFINE_enum(
         "model_type", "RNN", [
-            "CBOW", "RNN", "SPINN", "RLSPINN", "ChoiPyramid", "EESC"], "")
+            "CBOW", "RNN", "SPINN", "RLSPINN", "ChoiPyramid", "EESC", "LMS"], "")
     gflags.DEFINE_integer("gpu", -1, "")
     gflags.DEFINE_integer("model_dim", 8, "")
     gflags.DEFINE_integer("word_embedding_dim", 8, "")
@@ -364,7 +340,7 @@ def get_flags():
     gflags.DEFINE_boolean("use_difference_feature", True, "")
     gflags.DEFINE_boolean("use_product_feature", True, "")
 
-    # Tracker settings.
+    # SPINN tracking LSTM settings.
     gflags.DEFINE_integer(
         "tracking_lstm_hidden_dim",
         None,
@@ -390,12 +366,12 @@ def get_flags():
     gflags.DEFINE_boolean("predict_use_cell", True,
                           "Use cell output as feature for transition net.")
 
-    # Reduce settings.
+    # SPINN composition function settings.
     gflags.DEFINE_enum(
         "reduce", "treelstm", [
-            "treelstm", "treegru", "tanh"], "Specify composition function.")
+            "treelstm", "treegru", "tanh", "lms"], "Specify composition function.")
 
-    # Pyramid model settings
+    # ChoiPyramid/ST-Gumbel model settings
     gflags.DEFINE_boolean(
         "pyramid_trainable_temperature",
         None,
@@ -407,7 +383,7 @@ def get_flags():
         0.0,
         "For wake-sleep-style experiments. 0.0 disables this feature.")
 
-    # Encode settings.
+    # Embedding preprocessing settings.
     gflags.DEFINE_enum("encode",
                        "projection",
                        ["pass",
@@ -481,7 +457,7 @@ def get_flags():
     # MLP settings.
     gflags.DEFINE_integer(
         "mlp_dim",
-        1024,
+        256,
         "Dimension of intermediate MLP layers.")
     gflags.DEFINE_integer("num_mlp_layers", 1, "Number of MLP layers.")
     gflags.DEFINE_boolean(
@@ -492,19 +468,16 @@ def get_flags():
                         "Used for dropout in the semantic task classifier.")
 
     # Optimization settings.
+    gflags.DEFINE_enum("optimizer_type", "Adam", ["Adam", "SGD"], "")
     gflags.DEFINE_integer(
         "training_steps",
-        500000,
+        1000000,
         "Stop training after this point.")
     gflags.DEFINE_integer("batch_size", 32, "SGD minibatch size.")
-    gflags.DEFINE_float("learning_rate", 0.001, "Used in optimizer.")
+    gflags.DEFINE_float("learning_rate", 0.0003, "Used in optimizer.")  # https://twitter.com/karpathy/status/801621764144971776
     gflags.DEFINE_float(
         "learning_rate_decay_per_10k_steps",
         0.75,
-        "Used in optimizer.")
-    gflags.DEFINE_boolean(
-        "actively_decay_learning_rate",
-        True,
         "Used in optimizer.")
     gflags.DEFINE_float("clipping_max_value", 5.0, "")
     gflags.DEFINE_float("l2_lambda", 1e-5, "")
@@ -594,11 +567,11 @@ def flag_defaults(FLAGS, load_log_flags=False):
     if not FLAGS.sample_interval_steps:
         FLAGS.sample_interval_steps = FLAGS.statistics_interval_steps
 
-    if not FLAGS.metrics_path:
-        FLAGS.metrics_path = FLAGS.log_path
-
-    if FLAGS.model_type == "CBOW" or FLAGS.model_type == "RNN" or FLAGS.model_type == "ChoiPyramid" or FLAGS.model_type == "EESC":
+    if FLAGS.model_type in ["CBOW", "RNN", "ChoiPyramid", "EESC", "LMS"]:
         FLAGS.num_samples = 0
+
+    if FLAGS.model_type == "LMS":
+        FLAGS.reduce = "lms"
 
     if not torch.cuda.is_available():
         FLAGS.gpu = -1
@@ -626,18 +599,23 @@ def init_model(
         build_model = spinn.choi_pyramid.build_model
     elif FLAGS.model_type == "EESC":
         build_model = spinn.eesc.build_model
+    elif FLAGS.model_type == "LMS":
+        build_model = spinn.lms.build_model
     else:
         raise NotImplementedError
 
     # Input Encoder.
     context_args = Args()
-    context_args.reshape_input = lambda x, batch_size, seq_length: x
-    context_args.reshape_context = lambda x, batch_size, seq_length: x
-    context_args.input_dim = FLAGS.word_embedding_dim
+    if FLAGS.model_type == "LMS":
+        intermediate_dim = FLAGS.model_dim * FLAGS.model_dim
+    else:
+        intermediate_dim = FLAGS.model_dim
 
     if FLAGS.encode == "projection":
-        encoder = Linear()(FLAGS.word_embedding_dim, FLAGS.model_dim)
-        context_args.input_dim = FLAGS.model_dim
+        context_args.reshape_input = lambda x, batch_size, seq_length: x
+        context_args.reshape_context = lambda x, batch_size, seq_length: x
+        encoder = Linear()(FLAGS.word_embedding_dim, intermediate_dim)
+        context_args.input_dim = intermediate_dim
     elif FLAGS.encode == "gru":
         # revised by ethanCao
         # torch.nn.rnn expect input : seq_len x batch_size x model_dim
@@ -645,8 +623,8 @@ def init_model(
             batch_size, seq_length, -1)
         context_args.reshape_context = lambda x, batch_size, seq_length: x.view(
             batch_size * seq_length, -1)
-        context_args.input_dim = FLAGS.model_dim
-        encoder = EncodeGRU(FLAGS.word_embedding_dim, FLAGS.model_dim,
+        context_args.input_dim = intermediate_dim
+        encoder = EncodeGRU(FLAGS.word_embedding_dim, intermediate_dim,
                             num_layers=FLAGS.encode_num_layers,
                             bidirectional=FLAGS.encode_bidirectional,
                             reverse=FLAGS.encode_reverse,
@@ -656,9 +634,12 @@ def init_model(
             batch_size, seq_length, -1)
         context_args.reshape_context = lambda x, batch_size, seq_length: x.view(
             batch_size * seq_length, -1)
-        context_args.input_dim = FLAGS.model_dim
-        encoder = IntraAttention(FLAGS.word_embedding_dim, FLAGS.model_dim)
+        context_args.input_dim = intermediate_dim
+        encoder = IntraAttention(FLAGS.word_embedding_dim, intermediate_dim)
     elif FLAGS.encode == "pass":
+        context_args.reshape_input = lambda x, batch_size, seq_length: x
+        context_args.reshape_context = lambda x, batch_size, seq_length: x
+        context_args.input_dim = FLAGS.word_embedding_dim
         def encoder(x): return x
     else:
         raise NotImplementedError
@@ -679,6 +660,7 @@ def init_model(
 
     if FLAGS.reduce == "treelstm":
         assert FLAGS.model_dim % 2 == 0, 'model_dim must be an even number.'
+        assert FLAGS.model_type != 'LMS', 'Must use reduce=lms for LMS.'
         if FLAGS.model_dim != FLAGS.word_embedding_dim:
             print('If you are setting different hidden layer and word '
                   'embedding sizes, make sure you specify an encoder')
@@ -702,6 +684,12 @@ def init_model(
         composition = ReduceTreeGRU(FLAGS.model_dim,
                                     FLAGS.tracking_lstm_hidden_dim,
                                     FLAGS.use_tracking_in_composition)
+    elif FLAGS.reduce == "lms":
+        composition_args.wrap_items = lambda x: bundle(x)
+        composition_args.extract_h = lambda x: x.h
+        composition_args.extract_c = lambda x: x.c
+        composition_args.size = FLAGS.model_dim
+        composition = ReduceTensor(FLAGS.model_dim)
     else:
         raise NotImplementedError
 
@@ -711,15 +699,24 @@ def init_model(
                         num_classes, FLAGS, context_args, composition_args)
 
     # Build optimizer.
-    optimizer = optim.Adam([param for name, param in model.named_parameters() if name not in ["embed.embed.weight"]], lr=FLAGS.learning_rate, 
-        betas=(0.9, 0.999), eps=1e-08)
-
+    dense_parameters = [param for name, param in model.named_parameters() if name not in ["embed.embed.weight"]]
     sparse_parameters = [param for name, param in model.named_parameters() if name in ["embed.embed.weight"]]
-    if len(sparse_parameters) > 0:
-        sparse_optimizer = optim.SparseAdam(sparse_parameters, lr=FLAGS.learning_rate, 
-            betas=(0.9, 0.999), eps=1e-08)
-    else:
-        sparse_optimizer = None
+    if FLAGS.optimizer_type == "Adam":
+        optimizer = optim.Adam(dense_parameters, lr=FLAGS.learning_rate, 
+            betas=(0.9, 0.999), eps=1e-08, weight_decay=FLAGS.l2_lambda)
+
+        if len(sparse_parameters) > 0:
+            sparse_optimizer = optim.SparseAdam(sparse_parameters, lr=FLAGS.learning_rate, 
+                betas=(0.9, 0.999), eps=1e-08)
+        else:
+            sparse_optimizer = None
+    elif FLAGS.optimizer_type == "SGD":
+        optimizer = optim.SGD(dense_parameters, lr=FLAGS.learning_rate, 
+            weight_decay=FLAGS.l2_lambda)
+        if len(sparse_parameters) > 0:
+            sparse_optimizer = optim.SGD(sparse_parameters, lr=FLAGS.learning_rate)
+        else:
+            sparse_optimizer = None
 
     # Build trainer.
     trainer = ModelTrainer(model, optimizer, sparse_optimizer)

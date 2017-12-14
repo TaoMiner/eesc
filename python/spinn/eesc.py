@@ -6,12 +6,11 @@ import numpy as np
 # PyTorch
 import torch
 import torch.nn as nn
-from torch.nn import init
 from torch.autograd import Variable
 import torch.nn.functional as F
 
 from spinn.util.blocks import Embed, to_gpu, MLP, Linear, LayerNormalization
-from spinn.util.misc import Args, Vocab
+from spinn.util.misc import Vocab
 
 
 def build_model(data_manager, initial_embeddings, vocab_size,
@@ -366,7 +365,7 @@ class BinaryTreeLSTM(nn.Module):
         length_mask = sequence_mask(sequence_length=length,
                                     max_length=max_depth)
         select_masks = []
-        state = input.chunk(num_chunks=2, dim=2)
+        state = input.chunk(2, dim=2)
         nodes = []
         # For one or two-word trees where we never compute a temperature
         temperature_to_display = -1.0
@@ -630,7 +629,7 @@ class BinaryTreeLSTMLayer(nn.Module):
 
         hlr_cat = torch.cat([hl, hr], dim=2)
         treelstm_vector = apply_nd(fn=self.comp_linear, input=hlr_cat)
-        i, fl, fr, u, o = treelstm_vector.chunk(num_chunks=5, dim=2)
+        i, fl, fr, u, o = treelstm_vector.chunk(5, dim=2)
         c = (cl * (fl + 1).sigmoid() + cr * (fr + 1).sigmoid()
              + u.tanh() * i.sigmoid())
         h = o.sigmoid() * c.tanh()

@@ -9,8 +9,8 @@ import gflags
 import sys
 
 NYU_NON_PBS = False
-NAME = "5"
-SWEEP_RUNS = 12
+NAME = "8a"
+SWEEP_RUNS = 16
 
 LIN = "LIN"
 EXP = "EXP"
@@ -20,10 +20,10 @@ CHOICE = "CHOICE"
 
 FLAGS = gflags.FLAGS
 
-gflags.DEFINE_string("training_data_path", "/home/sb6065/trees/train.txt", "")
-gflags.DEFINE_string("eval_data_path", "/home/sb6065/trees/dev.txt", "")
-gflags.DEFINE_string("embedding_data_path", "/home/sb6065/glove/glove.840B.300d.txt", "")
-gflags.DEFINE_string("log_path", "/scratch/sb6065/logs/spinn", "")
+gflags.DEFINE_string("training_data_path", "/home/sbowman/trees/train.txt", "")
+gflags.DEFINE_string("eval_data_path", "/home/sbowman/trees/dev.txt", "")
+gflags.DEFINE_string("embedding_data_path", "/home/sbowman/glove/glove.840B.300d.txt", "")
+gflags.DEFINE_string("log_path", "/scratch/sbowman/logs", "")
 
 FLAGS(sys.argv)
 
@@ -55,11 +55,11 @@ FIXED_PARAMETERS = {
 
 # Tunable parameters.
 SWEEP_PARAMETERS = {
-    "semantic_classifier_keep_rate": ("skr", LIN, 0.5, 1.0),
-    "l2_lambda":          ("l2", EXP, 3e-9, 1e-5),
-    "learning_rate": ("lr", EXP, 0.00003, 0.01),
-    "model_dim": ("s", CHOICE, ['192', '256', '384', '512', '768'], None),
-    "mlp_dim": ("md", CHOICE, ['128', '256', '384', '512'], None),
+    "semantic_classifier_keep_rate": ("skr", LIN, 0.4, 1.0),
+    "l2_lambda":          ("l2", EXP, 1e-11, 1e-6),
+    "learning_rate": ("lr", EXP, 0.0001, 0.003),
+    "model_dim": ("s", CHOICE, ['140', '168', '288', '360', '440'], None),
+    "mlp_dim": ("md", CHOICE, ['64', '128', '256', '384'], None),
     "learning_rate_decay_per_10k_steps": ("ldc", EXP, 0.1, 1.0),
 }
 
@@ -139,7 +139,7 @@ for run_id in range(SWEEP_RUNS):
     if NYU_NON_PBS:
         print "cd spinn/python; python2.7 -m spinn.models.supervised_classifier " + flags
     else:
-        print "SPINNMODEL=\"spinn.models.supervised_classifier\" SPINN_FLAGS=\"" + flags + "\" bash ../scripts/sbatch_submit.sh ../scripts/train_spinn.sbatch 1"
+        print "SPINNMODEL=\"spinn.models.supervised_classifier\" SPINN_FLAGS=\"" + flags + "\" bash ../scripts/sbatch_submit.sh ../scripts/train_spinn_cilvr.sbatch 1"
     print
 
 

@@ -25,11 +25,10 @@ import spinn.util.logging_pb2 as pb
 import torch
 import torch.nn as nn
 from torch.autograd import Variable
-import torch.nn.functional as F
 
 from spinn.models.base import get_data_manager, get_flags, get_batch
 from spinn.models.base import flag_defaults, init_model
-from spinn.models.base import sequential_only, get_checkpoint_path, log_path
+from spinn.models.base import get_checkpoint_path, log_path
 from spinn.models.base import load_data_and_embeddings
 
 
@@ -41,7 +40,6 @@ def evaluate(FLAGS, model, eval_set, log_entry,
     filename, dataset = eval_set
 
     A = Accumulator()
-    index = len(log_entry.evaluation)
     eval_log = log_entry.evaluation.add()
     reporter = EvalReporter()
     tree_strs = None
@@ -277,7 +275,7 @@ def train_loop(
         nn.utils.clip_grad_norm([param for name, param in model.named_parameters() if name not in ["embed.embed.weight"]], FLAGS.clipping_max_value)
 
         # Learning Rate Decay
-        if FLAGS.actively_decay_learning_rate:
+        if FLAGS.learning_rate_decay_per_10k_steps != 1.0:
             optimizer.lr = FLAGS.learning_rate * \
                 (FLAGS.learning_rate_decay_per_10k_steps ** (step / 10000.0))
 
