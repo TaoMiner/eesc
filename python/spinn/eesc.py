@@ -22,6 +22,7 @@ def build_model(data_manager, initial_embeddings, vocab_size,
                      word_embedding_dim=FLAGS.word_embedding_dim,
                      vocab_size=vocab_size,
                      initial_embeddings=initial_embeddings,
+                     fine_tune_loaded_embeddings=FLAGS.fine_tune_loaded_embeddings,
                      num_classes=num_classes,
                      embedding_keep_rate=FLAGS.embedding_keep_rate,
                      use_sentence_pair=use_sentence_pair,
@@ -45,6 +46,7 @@ class EESC(nn.Module):
                  use_product_feature=None,
                  use_difference_feature=None,
                  initial_embeddings=None,
+                 fine_tune_loaded_embeddings=None,
                  num_classes=None,
                  embedding_keep_rate=None,
                  use_sentence_pair=False,
@@ -75,7 +77,8 @@ class EESC(nn.Module):
         self.embed = Embed(
             word_embedding_dim,
             vocab.size,
-            vectors=vocab.vectors)
+            vectors=vocab.vectors,
+            fine_tune=fine_tune_loaded_embeddings)
 
         self.binary_tree_lstm = BinaryTreeLSTM(
             word_embedding_dim,
@@ -270,7 +273,8 @@ class BinaryTreeLSTM(nn.Module):
         # TODO: Add something to blocks to make this use case more elegant.
         self.comp_query = Linear()(
             in_features=hidden_dim,
-            out_features=1)
+            out_features=1,
+            bias=False)
         self.trainable_temperature = trainable_temperature
         if self.trainable_temperature:
             self.temperature_param = nn.Parameter(
@@ -480,7 +484,7 @@ def convert_to_one_hot(indices, num_classes):
 
 def masked_softmax(logits, mask=None):
     eps = 1e-20
-    probs = F.softmax(logits)
+    probs = F.softmax(logits, dim=1)
     if mask is not None:
         mask = mask.float()
         probs = probs * mask + eps
@@ -543,19 +547,13 @@ def sequence_mask(sequence_length, max_length=None):
     return seq_range_expand < seq_length_expand
 
 class CompQueryLayer(nn.Module):
-    def __init__(self, hidden_dim, composition_ln=False):
+    def __init__(self, hidden_dim):
         super(CompQueryLayer, self).__init__()
         self.fc1 = nn.Linear(hidden_dim, hidden_dim)
         self.fc2 = nn.Linear(hidden_dim, hidden_dim)
-        self.composition_ln = composition_ln
-        if composition_ln:
-            self.x_ln = LayerNormalization(hidden_dim)
 
     def forward(self, x1, x2):
         batch_size, seq_len, dim = x1.size()
-        if self.composition_ln:
-            x1 = self.x_ln(x1)
-            x2 = self.x_ln(x2)
         x1 = F.tanh(self.fc1(x1))
         x2 = F.tanh(self.fc2(x2))
         x1 = x1.view(-1, dim).unsqueeze(1)
@@ -565,24 +563,13 @@ class CompQueryLayer(nn.Module):
         return x
 
 class NonCompLayer(nn.Module):
-    def __init__(self, hidden_dim, composition_ln=False):
+    def __init__(self, hidden_dim):
         super(NonCompLayer, self).__init__()
         self.fc = nn.Linear(2*hidden_dim, hidden_dim)
-        self.composition_ln = composition_ln
-        if composition_ln:
-            self.left_h_ln = LayerNormalization(hidden_dim)
-            self.right_h_ln = LayerNormalization(hidden_dim)
-            self.left_c_ln = LayerNormalization(hidden_dim)
-            self.right_c_ln = LayerNormalization(hidden_dim)
 
     def forward(self, l=None, r=None):
         hl, cl = l
         hr, cr = r
-        if self.composition_ln:
-            hl = self.left_h_ln(hl)
-            hr = self.right_h_ln(hr)
-            cl = self.left_c_ln(cl)
-            cr = self.right_c_ln(cr)
         hlr_cat = torch.cat([hl, hr], dim=2)
         h = F.tanh(self.fc(hlr_cat))
         clr_cat = torch.cat([cl, cr], dim=2)
