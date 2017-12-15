@@ -1,39 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project version="4">
   <component name="ChangeListManager">
-    <list default="true" id="83426456-92f1-4a96-b5da-9d8aa5c40ffb" name="Default" comment="">
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/python/spinn/lms.py" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/scripts/train_spinn_cilvr.sbatch" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/python/spinn/tests/test_catalan.py" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/python/spinn/tests/test_evalb.py" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/python/spinn/tests/test_metrics.py" afterPath="" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/.idea/workspace.xml" afterPath="$PROJECT_DIR$/.idea/workspace.xml" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/python/spinn/cbow.py" afterPath="$PROJECT_DIR$/python/spinn/cbow.py" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/python/spinn/choi_pyramid.py" afterPath="$PROJECT_DIR$/python/spinn/choi_pyramid.py" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/python/spinn/data/nli/load_nli_data.py" afterPath="$PROJECT_DIR$/python/spinn/data/nli/load_nli_data.py" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/python/spinn/eesc.py" afterPath="$PROJECT_DIR$/python/spinn/eesc.py" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/python/spinn/models/base.py" afterPath="$PROJECT_DIR$/python/spinn/models/base.py" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/python/spinn/models/rl_classifier.py" afterPath="$PROJECT_DIR$/python/spinn/models/rl_classifier.py" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/python/spinn/models/supervised_classifier.py" afterPath="$PROJECT_DIR$/python/spinn/models/supervised_classifier.py" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/python/spinn/plain_rnn.py" afterPath="$PROJECT_DIR$/python/spinn/plain_rnn.py" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/python/spinn/tests/test_data.py" afterPath="$PROJECT_DIR$/python/spinn/tests/test_data.py" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/python/spinn/tests/test_stack.py" afterPath="$PROJECT_DIR$/python/spinn/tests/test_stack.py" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/python/spinn/util/afs_safe_logger.py" afterPath="$PROJECT_DIR$/python/spinn/util/afs_safe_logger.py" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/python/spinn/util/blocks.py" afterPath="$PROJECT_DIR$/python/spinn/util/blocks.py" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/python/spinn/util/catalan.py" afterPath="$PROJECT_DIR$/python/spinn/util/catalan.py" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/python/spinn/util/logging.py" afterPath="$PROJECT_DIR$/python/spinn/util/logging.py" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/python/spinn/util/misc.py" afterPath="$PROJECT_DIR$/python/spinn/util/misc.py" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/scripts/make_arith_sweep.py" afterPath="$PROJECT_DIR$/scripts/make_arith_sweep.py" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/scripts/make_listops_catalan_sweep.py" afterPath="$PROJECT_DIR$/scripts/make_listops_catalan_sweep.py" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/scripts/make_listops_sweep.py" afterPath="$PROJECT_DIR$/scripts/make_listops_sweep.py" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/scripts/make_listops_sweep_es.py" afterPath="$PROJECT_DIR$/scripts/make_listops_sweep_es.py" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/scripts/make_multinli_sweep.py" afterPath="$PROJECT_DIR$/scripts/make_multinli_sweep.py" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/scripts/make_rlspinn_multinli_sweep.py" afterPath="$PROJECT_DIR$/scripts/make_rlspinn_multinli_sweep.py" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/scripts/make_rlspinn_rl_sweep.py" afterPath="$PROJECT_DIR$/scripts/make_rlspinn_rl_sweep.py" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/scripts/make_rlspinn_snli_sweep.py" afterPath="$PROJECT_DIR$/scripts/make_rlspinn_snli_sweep.py" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/scripts/make_snli_sweep.py" afterPath="$PROJECT_DIR$/scripts/make_snli_sweep.py" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/scripts/make_sst_sweep.py" afterPath="$PROJECT_DIR$/scripts/make_sst_sweep.py" />
-    </list>
+    <list default="true" id="83426456-92f1-4a96-b5da-9d8aa5c40ffb" name="Default" comment="" />
     <option name="EXCLUDED_CONVERTED_TO_IGNORED" value="true" />
     <option name="TRACKING_ENABLED" value="true" />
     <option name="SHOW_DIALOG" value="false" />
@@ -145,28 +113,30 @@
       <file leaf-file-name="supervised_classifier.py" pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/python/spinn/models/supervised_classifier.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="9384">
-              <caret line="439" column="19" lean-forward="false" selection-start-line="439" selection-start-column="19" selection-end-line="439" selection-end-column="19" />
+            <state relative-caret-position="349">
+              <caret line="202" column="33" lean-forward="true" selection-start-line="202" selection-start-column="33" selection-end-line="202" selection-end-column="33" />
               <folding />
             </state>
           </provider>
         </entry>
       </file>
-      <file leaf-file-name="base.py" pinned="false" current-in-tab="true">
+      <file leaf-file-name="base.py" pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/python/spinn/models/base.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="437">
-              <caret line="27" column="0" lean-forward="true" selection-start-line="27" selection-start-column="0" selection-end-line="27" selection-end-column="0" />
-              <folding />
+            <state relative-caret-position="403">
+              <caret line="167" column="52" lean-forward="false" selection-start-line="167" selection-start-column="52" selection-end-line="167" selection-end-column="52" />
+              <folding>
+                <element signature="e#0#10#0" expanded="true" />
+              </folding>
             </state>
           </provider>
         </entry>
       </file>
-      <file leaf-file-name="data.py" pinned="false" current-in-tab="false">
+      <file leaf-file-name="data.py" pinned="false" current-in-tab="true">
         <entry file="file://$PROJECT_DIR$/python/spinn/util/data.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="13087">
-              <caret line="578" column="25" lean-forward="false" selection-start-line="578" selection-start-column="25" selection-end-line="578" selection-end-column="25" />
+            <state relative-caret-position="656">
+              <caret line="666" column="54" lean-forward="true" selection-start-line="666" selection-start-column="54" selection-end-line="666" selection-end-column="54" />
               <folding />
             </state>
           </provider>
@@ -206,6 +176,8 @@
       <find>composition_ln</find>
       <find>nocomposition_ln</find>
       <find>chunk</find>
+      <find>adam</find>
+      <find>HEAD</find>
     </findStrings>
   </component>
   <component name="Git.Settings">
@@ -289,6 +261,28 @@
             </PATH_ELEMENT>
             <PATH_ELEMENT>
               <option name="myItemId" value="spinn" />
+              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
+            </PATH_ELEMENT>
+          </PATH>
+          <PATH>
+            <PATH_ELEMENT>
+              <option name="myItemId" value="eesc" />
+              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.ProjectViewProjectNode" />
+            </PATH_ELEMENT>
+            <PATH_ELEMENT>
+              <option name="myItemId" value="eesc" />
+              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
+            </PATH_ELEMENT>
+            <PATH_ELEMENT>
+              <option name="myItemId" value="python" />
+              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
+            </PATH_ELEMENT>
+            <PATH_ELEMENT>
+              <option name="myItemId" value="spinn" />
+              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
+            </PATH_ELEMENT>
+            <PATH_ELEMENT>
+              <option name="myItemId" value="tests" />
               <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
             </PATH_ELEMENT>
           </PATH>
@@ -604,21 +598,6 @@
     <watches-manager />
   </component>
   <component name="editorHistoryManager">
-    <entry file="file://$PROJECT_DIR$/python/spinn/models/base.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="11615">
-          <caret line="542" column="25" lean-forward="true" selection-start-line="542" selection-start-column="25" selection-end-line="542" selection-end-column="25" />
-          <folding />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/python/run_supervised_classifier.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="414">
-          <caret line="25" column="27" lean-forward="true" selection-start-line="25" selection-start-column="27" selection-end-line="25" selection-end-column="27" />
-        </state>
-      </provider>
-    </entry>
     <entry file="file://$PROJECT_DIR$/python/spinn/choi_pyramid.py">
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="9062">
@@ -982,13 +961,6 @@
     <entry file="file://$USER_HOME$/Downloads/spinn-master/python/spinn/util/blocks.py" />
     <entry file="file://$USER_HOME$/Downloads/spinn-master/python/spinn/choi_pyramid.py" />
     <entry file="file://$USER_HOME$/Downloads/spinn-master/python/spinn/models/base.py" />
-    <entry file="file://$PROJECT_DIR$/python/spinn/util/logging.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="4278">
-          <caret line="190" column="58" lean-forward="false" selection-start-line="190" selection-start-column="49" selection-end-line="190" selection-end-column="58" />
-        </state>
-      </provider>
-    </entry>
     <entry file="file://$USER_HOME$/anaconda2/envs/tfTest/lib/python2.7/site-packages/torch/nn/modules/sparse.py">
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="-69">
@@ -1038,26 +1010,10 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/python/spinn/util/data.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="13087">
-          <caret line="578" column="25" lean-forward="false" selection-start-line="578" selection-start-column="25" selection-end-line="578" selection-end-column="25" />
-          <folding />
-        </state>
-      </provider>
-    </entry>
     <entry file="file://$USER_HOME$/anaconda2/envs/tfTest/lib/python2.7/site-packages/torch/nn/modules/module.py">
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="671">
           <caret line="57" column="13" lean-forward="false" selection-start-line="57" selection-start-column="13" selection-end-line="57" selection-end-column="13" />
-          <folding />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/python/spinn/models/supervised_classifier.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="9384">
-          <caret line="439" column="19" lean-forward="false" selection-start-line="439" selection-start-column="19" selection-end-line="439" selection-end-column="19" />
           <folding />
         </state>
       </provider>
@@ -1090,14 +1046,6 @@
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="-2794">
           <caret line="20" column="22" lean-forward="true" selection-start-line="20" selection-start-column="22" selection-end-line="20" selection-end-column="22" />
-          <folding />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/README.md">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="357">
-          <caret line="28" column="0" lean-forward="true" selection-start-line="28" selection-start-column="0" selection-end-line="28" selection-end-column="0" />
           <folding />
         </state>
       </provider>
@@ -1181,10 +1129,60 @@
         </state>
       </provider>
     </entry>
+    <entry file="file://$USER_HOME$/anaconda2/envs/tfTest/lib/python2.7/site-packages/torch/optim/adam.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="368">
+          <caret line="24" column="8" lean-forward="false" selection-start-line="24" selection-start-column="8" selection-end-line="24" selection-end-column="8" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/python/requirements.txt">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="69">
+          <caret line="3" column="8" lean-forward="false" selection-start-line="3" selection-start-column="0" selection-end-line="3" selection-end-column="8" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/python/spinn/util/logging.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="403">
+          <caret line="89" column="23" lean-forward="true" selection-start-line="89" selection-start-column="23" selection-end-line="89" selection-end-column="23" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/python/spinn/models/supervised_classifier.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="349">
+          <caret line="202" column="33" lean-forward="true" selection-start-line="202" selection-start-column="33" selection-end-line="202" selection-end-column="33" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
     <entry file="file://$PROJECT_DIR$/python/spinn/models/base.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="437">
-          <caret line="27" column="0" lean-forward="true" selection-start-line="27" selection-start-column="0" selection-end-line="27" selection-end-column="0" />
+        <state relative-caret-position="403">
+          <caret line="167" column="52" lean-forward="false" selection-start-line="167" selection-start-column="52" selection-end-line="167" selection-end-column="52" />
+          <folding>
+            <element signature="e#0#10#0" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/README.md">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="284">
+          <caret line="27" column="34" lean-forward="false" selection-start-line="27" selection-start-column="34" selection-end-line="27" selection-end-column="34" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/python/spinn/util/data.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="656">
+          <caret line="666" column="54" lean-forward="true" selection-start-line="666" selection-start-column="54" selection-end-line="666" selection-end-column="54" />
           <folding />
         </state>
       </provider>

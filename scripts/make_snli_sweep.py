@@ -65,12 +65,14 @@ FIXED_PARAMETERS = {
 
 # Tunable parameters.
 SWEEP_PARAMETERS = {
-    "l2_lambda":          ("l2", EXP, 8e-7, 1e-3),
-    "learning_rate_decay_per_10k_steps": ("dc", LIN, 0.3, 1.0),
-    "pyramid_trainable_temperature": ("tt", BOOL, None, None),
-    "pyramid_temperature_decay_per_10k_steps": ("tdc", EXP, 0.2, 1.0),
-    "pyramid_temperature_cycle_length": ("cl", CHOICE, ['0', '0', '300', '3000'], None),
-    "learning_rate": ("lr", EXP, 0.0001, 0.01),
+    "learning_rate":      ("lr", EXP, 0.0002, 0.002),  # RNN likes higher, but below 009.
+    "l2_lambda":          ("l2", EXP, 8e-7, 2e-5),
+    "semantic_classifier_keep_rate": ("skr", LIN, 0.7, 0.95),  # NB: Keep rates may depend considerably on dims.
+    "embedding_keep_rate": ("ekr", LIN, 0.7, 0.95),
+    "learning_rate_decay_when_no_progress": ("dec", EXP, 0.5, 1.0),
+    "tracking_lstm_hidden_dim": ("tdim", EXP, 24, 128),
+    "rl_weight":  ("rlwt", EXP, 0.00001, 0.01),
+    "rl_entropy_beta": ("rle", EXP, 0.00001, 0.1)
 }
 
 sweep_name = "sweep_" + NAME + "_" + \
