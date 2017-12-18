@@ -16,7 +16,7 @@ from spinn.util.misc import Vocab
 def build_model(data_manager, initial_embeddings, vocab_size,
                 num_classes, FLAGS, context_args, composition_args, **kwargs):
     use_sentence_pair = data_manager.SENTENCE_PAIR_DATA
-    model_cls = ChoiPyramid
+    model_cls = EESC
 
     return model_cls(
         model_dim=FLAGS.model_dim,
@@ -83,7 +83,7 @@ class EESC(nn.Module):
 
         self.binary_tree_lstm = BinaryTreeLSTM(
             word_embedding_dim,
-            model_dim / 2,
+            model_dim // 2,
             False,
             composition_ln=composition_ln,
             trainable_temperature=trainable_temperature)
@@ -153,12 +153,12 @@ class EESC(nn.Module):
         return output
 
     def get_features_dim(self):
-        features_dim = self.model_dim if self.use_sentence_pair else self.model_dim / 2
+        features_dim = self.model_dim if self.use_sentence_pair else self.model_dim // 2
         if self.use_sentence_pair:
             if self.use_difference_feature:
-                features_dim += self.model_dim / 2
+                features_dim += self.model_dim // 2
             if self.use_product_feature:
-                features_dim += self.model_dim / 2
+                features_dim += self.model_dim // 2
         return features_dim
 
     def build_features(self, h):
@@ -185,9 +185,9 @@ class EESC(nn.Module):
 
         token_sequences = []
         batch_size = x.shape[0]
-        for s in (range(int(self.use_sentence_pair) + 1)
+        for s in (list(range(int(self.use_sentence_pair) + 1))
                   if not only_one else [0]):
-            for b in (range(batch_size) if not only_one else [0]):
+            for b in (list(range(batch_size)) if not only_one else [0]):
                 if self.use_sentence_pair:
                     token_sequence = [self.inverted_vocabulary[token]
                                       for token in x[b, :, s]]
@@ -242,7 +242,7 @@ class EESC(nn.Module):
             x), volatile=not self.training)), lengths
 
     def wrap_sentence_pair(self, hh):
-        batch_size = hh.size(0) / 2
+        batch_size = hh.size(0) // 2
         h = ([hh[:batch_size], hh[batch_size:]])
         return h
 
@@ -271,7 +271,7 @@ class BinaryTreeLSTM(nn.Module):
 
         # TODO: Add something to blocks to make this use case more elegant.
         self.comp_query = Linear()(
-            in_features=3*hidden_dim,
+            in_features= 3 * hidden_dim,
             out_features=1,
             bias=False)
         self.trainable_temperature = trainable_temperature
@@ -309,7 +309,6 @@ class BinaryTreeLSTM(nn.Module):
         comp_weights = dot_nd(
             query=self.comp_query.weight.squeeze(),
             candidates=tmp_h3)
-
         if self.training:
             temperature = temperature_multiplier
             if self.trainable_temperature:

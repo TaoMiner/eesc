@@ -2,69 +2,8 @@
 <project version="4">
   <component name="ChangeListManager">
     <list default="true" id="83426456-92f1-4a96-b5da-9d8aa5c40ffb" name="Default" comment="">
-      <change type="DELETED" beforePath="$PROJECT_DIR$/scripts/train_spinn_es_cpu_only.sbatch" afterPath="" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/.gitignore" afterPath="$PROJECT_DIR$/.gitignore" />
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/.idea/workspace.xml" afterPath="$PROJECT_DIR$/.idea/workspace.xml" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/README.md" afterPath="$PROJECT_DIR$/README.md" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/python/requirements.txt" afterPath="$PROJECT_DIR$/python/requirements.txt" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/python/spinn/cbow.py" afterPath="$PROJECT_DIR$/python/spinn/cbow.py" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/python/spinn/choi_pyramid.py" afterPath="$PROJECT_DIR$/python/spinn/choi_pyramid.py" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/python/spinn/data/arithmetic/base.py" afterPath="$PROJECT_DIR$/python/spinn/data/arithmetic/base.py" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/python/spinn/data/arithmetic/load_simple_data.py" afterPath="$PROJECT_DIR$/python/spinn/data/arithmetic/load_simple_data.py" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/python/spinn/data/arithmetic/make_data.py" afterPath="$PROJECT_DIR$/python/spinn/data/arithmetic/make_data.py" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/python/spinn/data/boolean/generate_bl_data.py" afterPath="$PROJECT_DIR$/python/spinn/data/boolean/generate_bl_data.py" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/python/spinn/data/boolean/load_boolean_data.py" afterPath="$PROJECT_DIR$/python/spinn/data/boolean/load_boolean_data.py" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/python/spinn/data/dual_arithmetic/base.py" afterPath="$PROJECT_DIR$/python/spinn/data/dual_arithmetic/base.py" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/python/spinn/data/dual_arithmetic/make_data.py" afterPath="$PROJECT_DIR$/python/spinn/data/dual_arithmetic/make_data.py" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/python/spinn/data/listops/base.py" afterPath="$PROJECT_DIR$/python/spinn/data/listops/base.py" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/python/spinn/data/listops/load_listops_data.py" afterPath="$PROJECT_DIR$/python/spinn/data/listops/load_listops_data.py" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/python/spinn/data/listops/make_data.py" afterPath="$PROJECT_DIR$/python/spinn/data/listops/make_data.py" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/python/spinn/data/nli/load_nli_data.py" afterPath="$PROJECT_DIR$/python/spinn/data/nli/load_nli_data.py" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/python/spinn/data/sst/base.py" afterPath="$PROJECT_DIR$/python/spinn/data/sst/base.py" />
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/python/spinn/eesc.py" afterPath="$PROJECT_DIR$/python/spinn/eesc.py" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/python/spinn/lms.py" afterPath="$PROJECT_DIR$/python/spinn/lms.py" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/python/spinn/models/base.py" afterPath="$PROJECT_DIR$/python/spinn/models/base.py" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/python/spinn/models/rl_classifier.py" afterPath="$PROJECT_DIR$/python/spinn/models/rl_classifier.py" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/python/spinn/models/supervised_classifier.py" afterPath="$PROJECT_DIR$/python/spinn/models/supervised_classifier.py" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/python/spinn/plain_rnn.py" afterPath="$PROJECT_DIR$/python/spinn/plain_rnn.py" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/python/spinn/rl_spinn.py" afterPath="$PROJECT_DIR$/python/spinn/rl_spinn.py" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/python/spinn/spinn_core_model.py" afterPath="$PROJECT_DIR$/python/spinn/spinn_core_model.py" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/python/spinn/tests/test_arithmetic.py" afterPath="$PROJECT_DIR$/python/spinn/tests/test_arithmetic.py" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/python/spinn/tests/test_data.py" afterPath="$PROJECT_DIR$/python/spinn/tests/test_data.py" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/python/spinn/tests/test_stack.py" afterPath="$PROJECT_DIR$/python/spinn/tests/test_stack.py" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/python/spinn/util/__init__.py" afterPath="$PROJECT_DIR$/python/spinn/util/__init__.py" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/python/spinn/util/afs_safe_logger.py" afterPath="$PROJECT_DIR$/python/spinn/util/afs_safe_logger.py" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/python/spinn/util/blocks.py" afterPath="$PROJECT_DIR$/python/spinn/util/blocks.py" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/python/spinn/util/data.py" afterPath="$PROJECT_DIR$/python/spinn/util/data.py" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/python/spinn/util/evalb.py" afterPath="$PROJECT_DIR$/python/spinn/util/evalb.py" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/python/spinn/util/logging_pb2.py" afterPath="$PROJECT_DIR$/python/spinn/util/logging_pb2.py" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/python/spinn/util/logparse.py" afterPath="$PROJECT_DIR$/python/spinn/util/logparse.py" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/python/spinn/util/misc.py" afterPath="$PROJECT_DIR$/python/spinn/util/misc.py" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/python/spinn/util/sparks.py" afterPath="$PROJECT_DIR$/python/spinn/util/sparks.py" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/python/spinn/util/test.py" afterPath="$PROJECT_DIR$/python/spinn/util/test.py" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/scripts/analyze_log.py" afterPath="$PROJECT_DIR$/scripts/analyze_log.py" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/scripts/analyze_report.py" afterPath="$PROJECT_DIR$/scripts/analyze_report.py" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/scripts/combine_nli.py" afterPath="$PROJECT_DIR$/scripts/combine_nli.py" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/scripts/convert_ckpt.py" afterPath="$PROJECT_DIR$/scripts/convert_ckpt.py" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/scripts/jsonl_wrapper_for_binptb.py" afterPath="$PROJECT_DIR$/scripts/jsonl_wrapper_for_binptb.py" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/scripts/make_arith_sweep.py" afterPath="$PROJECT_DIR$/scripts/make_arith_sweep.py" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/scripts/make_listops_catalan_sweep.py" afterPath="$PROJECT_DIR$/scripts/make_listops_catalan_sweep.py" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/scripts/make_listops_rl_sweep.py" afterPath="$PROJECT_DIR$/scripts/make_listops_rl_sweep.py" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/scripts/make_listops_sweep.py" afterPath="$PROJECT_DIR$/scripts/make_listops_sweep.py" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/scripts/make_listops_sweep_es.py" afterPath="$PROJECT_DIR$/scripts/make_listops_sweep_es.py" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/scripts/make_multinli_sweep.py" afterPath="$PROJECT_DIR$/scripts/make_multinli_sweep.py" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/scripts/make_rlspinn_multinli_sweep.py" afterPath="$PROJECT_DIR$/scripts/make_rlspinn_multinli_sweep.py" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/scripts/make_rlspinn_rl_sweep.py" afterPath="$PROJECT_DIR$/scripts/make_rlspinn_rl_sweep.py" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/scripts/make_rlspinn_snli_sweep.py" afterPath="$PROJECT_DIR$/scripts/make_rlspinn_snli_sweep.py" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/scripts/make_snli_sweep.py" afterPath="$PROJECT_DIR$/scripts/make_snli_sweep.py" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/scripts/make_sst_sweep.py" afterPath="$PROJECT_DIR$/scripts/make_sst_sweep.py" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/scripts/parse_comparison.py" afterPath="$PROJECT_DIR$/scripts/parse_comparison.py" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/scripts/parse_logs.py" afterPath="$PROJECT_DIR$/scripts/parse_logs.py" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/scripts/report_to_submission_csv.py" afterPath="$PROJECT_DIR$/scripts/report_to_submission_csv.py" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/scripts/train_spinn.sbatch" afterPath="$PROJECT_DIR$/scripts/train_spinn.sbatch" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/scripts/train_spinn_cilvr.sbatch" afterPath="$PROJECT_DIR$/scripts/train_spinn_cilvr.sbatch" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/scripts/train_spinn_cpu_only.sbatch" afterPath="$PROJECT_DIR$/scripts/train_spinn_cpu_only.sbatch" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/scripts/visdom_reporter.py" afterPath="$PROJECT_DIR$/scripts/visdom_reporter.py" />
     </list>
     <option name="EXCLUDED_CONVERTED_TO_IGNORED" value="true" />
     <option name="TRACKING_ENABLED" value="true" />
@@ -82,11 +21,10 @@
       <file leaf-file-name="choi_pyramid.py" pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/python/spinn/choi_pyramid.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="253">
-              <caret line="351" column="31" lean-forward="false" selection-start-line="0" selection-start-column="0" selection-end-line="560" selection-end-column="0" />
+            <state relative-caret-position="230">
+              <caret line="260" column="22" lean-forward="false" selection-start-line="0" selection-start-column="0" selection-end-line="560" selection-end-column="0" />
               <folding>
                 <element signature="e#176#194#0" expanded="true" />
-                <marker date="1513578498000" expanded="true" signature="8790:8859" ph="..." />
               </folding>
             </state>
           </provider>
@@ -95,8 +33,8 @@
       <file leaf-file-name="eesc.py" pinned="false" current-in-tab="true">
         <entry file="file://$PROJECT_DIR$/python/spinn/eesc.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="1070">
-              <caret line="332" column="53" lean-forward="false" selection-start-line="332" selection-start-column="53" selection-end-line="332" selection-end-column="53" />
+            <state relative-caret-position="437">
+              <caret line="89" column="0" lean-forward="true" selection-start-line="89" selection-start-column="0" selection-end-line="89" selection-end-column="0" />
               <folding>
                 <element signature="e#176#194#0" expanded="true" />
               </folding>
@@ -117,8 +55,8 @@
       <file leaf-file-name="supervised_classifier.py" pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/python/spinn/models/supervised_classifier.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="5428">
-              <caret line="248" column="56" lean-forward="false" selection-start-line="248" selection-start-column="56" selection-end-line="248" selection-end-column="56" />
+            <state relative-caret-position="1461">
+              <caret line="358" column="4" lean-forward="false" selection-start-line="358" selection-start-column="4" selection-end-line="358" selection-end-column="4" />
               <folding />
             </state>
           </provider>
@@ -127,8 +65,8 @@
       <file leaf-file-name="base.py" pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/python/spinn/models/base.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="14904">
-              <caret line="680" column="11" lean-forward="false" selection-start-line="680" selection-start-column="11" selection-end-line="680" selection-end-column="11" />
+            <state relative-caret-position="414">
+              <caret line="452" column="54" lean-forward="false" selection-start-line="452" selection-start-column="50" selection-end-line="452" selection-end-column="54" />
               <folding>
                 <element signature="e#0#10#0" expanded="true" />
               </folding>
@@ -142,7 +80,7 @@
             <state relative-caret-position="14651">
               <caret line="646" column="35" lean-forward="false" selection-start-line="646" selection-start-column="35" selection-end-line="646" selection-end-column="35" />
               <folding>
-                <marker date="1513578498000" expanded="true" signature="2636:3351" ph="..." />
+                <marker date="1513578730000" expanded="true" signature="2636:3351" ph="..." />
               </folding>
             </state>
           </provider>
@@ -268,6 +206,28 @@
             </PATH_ELEMENT>
             <PATH_ELEMENT>
               <option name="myItemId" value="spinn" />
+              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
+            </PATH_ELEMENT>
+          </PATH>
+          <PATH>
+            <PATH_ELEMENT>
+              <option name="myItemId" value="eesc" />
+              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.ProjectViewProjectNode" />
+            </PATH_ELEMENT>
+            <PATH_ELEMENT>
+              <option name="myItemId" value="eesc" />
+              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
+            </PATH_ELEMENT>
+            <PATH_ELEMENT>
+              <option name="myItemId" value="python" />
+              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
+            </PATH_ELEMENT>
+            <PATH_ELEMENT>
+              <option name="myItemId" value="spinn" />
+              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
+            </PATH_ELEMENT>
+            <PATH_ELEMENT>
+              <option name="myItemId" value="util" />
               <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
             </PATH_ELEMENT>
           </PATH>
@@ -600,7 +560,7 @@
           <line>10</line>
         </line-breakpoint>
       </breakpoints>
-      <option name="time" value="1" />
+      <option name="time" value="2" />
     </breakpoint-manager>
     <watches-manager />
   </component>
@@ -611,7 +571,6 @@
           <caret line="394" column="7" lean-forward="false" selection-start-line="394" selection-start-column="7" selection-end-line="394" selection-end-column="7" />
           <folding>
             <element signature="e#176#194#0" expanded="true" />
-            <marker date="1513578498000" expanded="true" signature="8790:8859" ph="..." />
           </folding>
         </state>
       </provider>
@@ -644,7 +603,6 @@
           <caret line="394" column="7" lean-forward="true" selection-start-line="394" selection-start-column="7" selection-end-line="394" selection-end-column="7" />
           <folding>
             <element signature="e#176#194#0" expanded="true" />
-            <marker date="1513578498000" expanded="true" signature="8790:8859" ph="..." />
           </folding>
         </state>
       </provider>
@@ -670,7 +628,6 @@
           <caret line="0" column="0" lean-forward="false" selection-start-line="0" selection-start-column="0" selection-end-line="0" selection-end-column="0" />
           <folding>
             <element signature="e#176#194#0" expanded="true" />
-            <marker date="1513578498000" expanded="true" signature="8790:8859" ph="..." />
           </folding>
         </state>
       </provider>
@@ -809,13 +766,6 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/python/spinn/util/misc.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="437">
-          <caret line="41" column="8" lean-forward="false" selection-start-line="41" selection-start-column="8" selection-end-line="41" selection-end-column="8" />
-        </state>
-      </provider>
-    </entry>
     <entry file="file://$PROJECT_DIR$/python/spinn/data/nli/load_nli_data.py">
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="1196">
@@ -874,13 +824,6 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/python/requirements.txt">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="69">
-          <caret line="3" column="8" lean-forward="false" selection-start-line="3" selection-start-column="0" selection-end-line="3" selection-end-column="8" />
-        </state>
-      </provider>
-    </entry>
     <entry file="file://$PROJECT_DIR$/python/spinn/util/logging.py">
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="403">
@@ -895,31 +838,13 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/python/spinn/models/base.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="14904">
-          <caret line="680" column="11" lean-forward="false" selection-start-line="680" selection-start-column="11" selection-end-line="680" selection-end-column="11" />
-          <folding>
-            <element signature="e#0#10#0" expanded="true" />
-          </folding>
-        </state>
-      </provider>
-    </entry>
     <entry file="file://$PROJECT_DIR$/python/spinn/util/data.py">
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="14651">
           <caret line="646" column="35" lean-forward="false" selection-start-line="646" selection-start-column="35" selection-end-line="646" selection-end-column="35" />
           <folding>
-            <marker date="1513578498000" expanded="true" signature="2636:3351" ph="..." />
+            <marker date="1513578730000" expanded="true" signature="2636:3351" ph="..." />
           </folding>
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/python/spinn/models/supervised_classifier.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="5428">
-          <caret line="248" column="56" lean-forward="false" selection-start-line="248" selection-start-column="56" selection-end-line="248" selection-end-column="56" />
-          <folding />
         </state>
       </provider>
     </entry>
@@ -931,21 +856,56 @@
         </state>
       </provider>
     </entry>
+    <entry file="file://$PROJECT_DIR$/python/spinn/models/supervised_classifier.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="1461">
+          <caret line="358" column="4" lean-forward="false" selection-start-line="358" selection-start-column="4" selection-end-line="358" selection-end-column="4" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/python/requirements.txt">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="92">
+          <caret line="4" column="0" lean-forward="true" selection-start-line="4" selection-start-column="0" selection-end-line="4" selection-end-column="0" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/python/spinn/models/base.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="414">
+          <caret line="452" column="54" lean-forward="false" selection-start-line="452" selection-start-column="50" selection-end-line="452" selection-end-column="54" />
+          <folding>
+            <element signature="e#0#10#0" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/python/spinn/util/misc.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="414">
+          <caret line="18" column="15" lean-forward="true" selection-start-line="18" selection-start-column="15" selection-end-line="18" selection-end-column="15" />
+          <folding>
+            <element signature="e#0#18#0" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
     <entry file="file://$PROJECT_DIR$/python/spinn/choi_pyramid.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="253">
-          <caret line="351" column="31" lean-forward="false" selection-start-line="0" selection-start-column="0" selection-end-line="560" selection-end-column="0" />
+        <state relative-caret-position="230">
+          <caret line="260" column="22" lean-forward="false" selection-start-line="0" selection-start-column="0" selection-end-line="560" selection-end-column="0" />
           <folding>
             <element signature="e#176#194#0" expanded="true" />
-            <marker date="1513578498000" expanded="true" signature="8790:8859" ph="..." />
           </folding>
         </state>
       </provider>
     </entry>
     <entry file="file://$PROJECT_DIR$/python/spinn/eesc.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="1070">
-          <caret line="332" column="53" lean-forward="false" selection-start-line="332" selection-start-column="53" selection-end-line="332" selection-end-column="53" />
+        <state relative-caret-position="437">
+          <caret line="89" column="0" lean-forward="true" selection-start-line="89" selection-start-column="0" selection-end-line="89" selection-end-column="0" />
           <folding>
             <element signature="e#176#194#0" expanded="true" />
           </folding>
