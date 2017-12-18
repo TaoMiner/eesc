@@ -16,26 +16,27 @@ from spinn.util.misc import Vocab
 def build_model(data_manager, initial_embeddings, vocab_size,
                 num_classes, FLAGS, context_args, composition_args, **kwargs):
     use_sentence_pair = data_manager.SENTENCE_PAIR_DATA
-    model_cls = EESC
+    model_cls = ChoiPyramid
 
-    return model_cls(model_dim=FLAGS.model_dim,
-                     word_embedding_dim=FLAGS.word_embedding_dim,
-                     vocab_size=vocab_size,
-                     initial_embeddings=initial_embeddings,
-                     fine_tune_loaded_embeddings=FLAGS.fine_tune_loaded_embeddings,
-                     num_classes=num_classes,
-                     embedding_keep_rate=FLAGS.embedding_keep_rate,
-                     use_sentence_pair=use_sentence_pair,
-                     use_difference_feature=FLAGS.use_difference_feature,
-                     use_product_feature=FLAGS.use_product_feature,
-                     classifier_keep_rate=FLAGS.semantic_classifier_keep_rate,
-                     mlp_dim=FLAGS.mlp_dim,
-                     num_mlp_layers=FLAGS.num_mlp_layers,
-                     mlp_ln=FLAGS.mlp_ln,
-                     composition_ln=FLAGS.composition_ln,
-                     context_args=context_args,
-                     trainable_temperature=FLAGS.pyramid_trainable_temperature,
-                     )
+    return model_cls(
+        model_dim=FLAGS.model_dim,
+        word_embedding_dim=FLAGS.word_embedding_dim,
+        vocab_size=vocab_size,
+        initial_embeddings=initial_embeddings,
+        fine_tune_loaded_embeddings=FLAGS.fine_tune_loaded_embeddings,
+        num_classes=num_classes,
+        embedding_keep_rate=FLAGS.embedding_keep_rate,
+        use_sentence_pair=use_sentence_pair,
+        use_difference_feature=FLAGS.use_difference_feature,
+        use_product_feature=FLAGS.use_product_feature,
+        classifier_keep_rate=FLAGS.semantic_classifier_keep_rate,
+        mlp_dim=FLAGS.mlp_dim,
+        num_mlp_layers=FLAGS.num_mlp_layers,
+        mlp_ln=FLAGS.mlp_ln,
+        composition_ln=FLAGS.composition_ln,
+        context_args=context_args,
+        trainable_temperature=FLAGS.pyramid_trainable_temperature,
+    )
 
 
 class EESC(nn.Module):
@@ -267,12 +268,10 @@ class BinaryTreeLSTM(nn.Module):
         self.intra_attention = intra_attention
         self.treelstm_layer = BinaryTreeLSTMLayer(
             hidden_dim, composition_ln=composition_ln)
-        self.non_comp_layer = NonCompLayer(hidden_dim=hidden_dim)
-        self.comp_query_layer = CompQueryLayer(hidden_dim=hidden_dim)
 
         # TODO: Add something to blocks to make this use case more elegant.
         self.comp_query = Linear()(
-            in_features=hidden_dim,
+            in_features=3*hidden_dim,
             out_features=1,
             bias=False)
         self.trainable_temperature = trainable_temperature
@@ -289,37 +288,27 @@ class BinaryTreeLSTM(nn.Module):
         c = done_mask * new_c + (1 - done_mask) * old_c[:, :-1, :]
         return h, c
 
-    def select_composition(self, state):
-        h, c = state
-        h_left, h_right = h[:, :-1, :], h[:, 1:, :]
-        # batch_size * seq_len
-        solid_weights = self.comp_query_layer(h_left, h_right)
-
-        return solid_weights
-
-    def select_free_comp(
+    def select_composition(
             self,
             old_state,
             new_state,
-            solid_weights,
             mask,
             temperature_multiplier=1.0):
-        old_h, old_c = old_state
-        old_h_left, old_h_right = old_h[:, :-2, :], old_h[:, 2:, :]
         new_h, new_c = new_state
-        new_h_left, new_h_right = new_h[:, :-1, :], new_h[:, 1:, :]
-        tmp_left_free = 1 - self.comp_query_layer(old_h_left, new_h_right)
-        tmp_right_free = 1 - self.comp_query_layer(new_h_left, old_h_right)
-        tmp_free_col = Variable(
-            tmp_left_free.data.new(tmp_left_free.size(0), 1).zero_())
-        left_free_weights = torch.cat(
-            [tmp_free_col, tmp_left_free], dim=1)
-        right_free_weights = torch.cat(
-            [tmp_right_free, tmp_free_col], dim=1)
-
-        free_weights = (left_free_weights + right_free_weights)/2
-        # borrow the algorithm of f1 score
-        comp_weights = 2*free_weights*solid_weights/(free_weights+solid_weights)
+        old_h, old_c = old_state
+        old_h_left, old_h_right = old_h[:, :-1, :], old_h[:, 1:, :]
+        old_c_left, old_c_right = old_c[:, :-1, :], old_c[:, 1:, :]
+        # extract h(-1) and h(+1)
+        old_h1 = old_h[:, :-1, :]
+        old_h2 = old_h[:, -1:, :]
+        new_h_size = new_h.size()
+        tmp_h = torch.cat([old_h1, old_h1, new_h], dim=2)
+        tmp_h1 = tmp_h.view(new_h_size[0], -1, new_h_size[-1])
+        tmp_h2 = torch.cat([tmp_h1, old_h2], dim=1)[:, 1:, :]
+        tmp_h3 = tmp_h2.contiguous().view(new_h_size[0], -1, 3 * new_h_size[-1])
+        comp_weights = dot_nd(
+            query=self.comp_query.weight.squeeze(),
+            candidates=tmp_h3)
 
         if self.training:
             temperature = temperature_multiplier
@@ -350,10 +339,6 @@ class BinaryTreeLSTM(nn.Module):
         right_mask = torch.cat(
             [right_mask_leftmost_col, select_mask_cumsum[:, :-1]], dim=1)
         right_mask_expand = right_mask.unsqueeze(2)
-
-        old_h_left, old_h_right = old_h[:, :-1, :], old_h[:, 1:, :]
-        old_c_left, old_c_right = old_c[:, :-1, :], old_c[:, 1:, :]
-
         new_h = (select_mask_expand * new_h
                  + left_mask_expand * old_h_left
                  + right_mask_expand * old_h_right)
@@ -361,7 +346,6 @@ class BinaryTreeLSTM(nn.Module):
                  + left_mask_expand * old_c_left
                  + right_mask_expand * old_c_right)
         selected_h = (select_mask_expand * new_h).sum(1)
-
         return new_h, new_c, select_mask, selected_h, temperature_to_display
 
     def forward(self, input, length, temperature_multiplier=1.0):
@@ -376,26 +360,16 @@ class BinaryTreeLSTM(nn.Module):
         if self.intra_attention:
             nodes.append(state[0])
         for i in range(max_depth - 1):
-            # revised
             h, c = state
             l = (h[:, :-1, :], c[:, :-1, :])
             r = (h[:, 1:, :], c[:, 1:, :])
-            # batch_size * seq_len * 1
-            solid_weights = self.select_composition(state)
-            solid_weights_expand = solid_weights.unsqueeze(2)
-            comp_h, comp_c = self.treelstm_layer(l=l, r=r)
-            non_comp_h, non_comp_c = self.non_comp_layer(l=l, r=r)
-
-            new_h = solid_weights_expand * comp_h + (1-solid_weights_expand) * non_comp_h
-            new_c = solid_weights_expand * comp_c + (1-solid_weights_expand) * non_comp_c
-
-            new_state = (new_h, new_c)
+            new_state = self.treelstm_layer(l=l, r=r)
             if i < max_depth - 2:
-                new_h, new_c, select_mask, selected_h, temperature_to_display = self.select_free_comp(
+                # We don't need to greedily select the composition in the
+                # last iteration, since it has only one option left.
+                new_h, new_c, select_mask, selected_h, temperature_to_display = self.select_composition(
                     old_state=state, new_state=new_state,
-                    solid_weights=solid_weights, mask=length_mask[:, i + 1:],
-                    temperature_multiplier=temperature_multiplier)
-
+                    mask=length_mask[:, i + 1:], temperature_multiplier=temperature_multiplier)
                 new_state = (new_h, new_c)
                 select_masks.append(select_mask)
                 if self.intra_attention:
@@ -425,6 +399,9 @@ class BinaryTreeLSTM(nn.Module):
             h = (att_weights_expand * nodes).sum(1)
         assert h.size(1) == 1 and c.size(1) == 1
         return h.squeeze(1), c.squeeze(1), select_masks, temperature_to_display
+
+    # --- From Choi's 'basic.py' ---
+
 
 def apply_nd(fn, input):
     """
@@ -546,39 +523,8 @@ def sequence_mask(sequence_length, max_length=None):
     seq_length_expand = sequence_length.unsqueeze(1)
     return seq_range_expand < seq_length_expand
 
-class CompQueryLayer(nn.Module):
-    def __init__(self, hidden_dim):
-        super(CompQueryLayer, self).__init__()
-        self.fc1 = nn.Linear(hidden_dim, hidden_dim)
-        self.fc2 = nn.Linear(hidden_dim, hidden_dim)
-
-    def forward(self, x1, x2):
-        batch_size, seq_len, dim = x1.size()
-        x1 = F.tanh(self.fc1(x1))
-        x2 = F.tanh(self.fc2(x2))
-        x1 = x1.view(-1, dim).unsqueeze(1)
-        x2 = x2.view(-1, dim).unsqueeze(2)
-        x = torch.bmm(x1,x2)
-        x = x.view(batch_size, -1)
-        return x
-
-class NonCompLayer(nn.Module):
-    def __init__(self, hidden_dim):
-        super(NonCompLayer, self).__init__()
-        self.fc = nn.Linear(2*hidden_dim, hidden_dim)
-
-    def forward(self, l=None, r=None):
-        hl, cl = l
-        hr, cr = r
-        hlr_cat = torch.cat([hl, hr], dim=2)
-        h = F.tanh(self.fc(hlr_cat))
-        clr_cat = torch.cat([cl, cr], dim=2)
-        c = F.tanh(self.fc(clr_cat))
-        return h, c
 
 class BinaryTreeLSTMLayer(nn.Module):
-    # TODO: Unify with SimpleTreeLSTM
-
     def __init__(self, hidden_dim, composition_ln=False):
         super(BinaryTreeLSTMLayer, self).__init__()
         self.hidden_dim = hidden_dim

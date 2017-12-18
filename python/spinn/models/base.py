@@ -13,8 +13,7 @@ from spinn.data.boolean import load_boolean_data
 from spinn.data.listops import load_listops_data
 from spinn.data.sst import load_sst_data, load_sst_binary_data
 from spinn.data.nli import load_nli_data
-from spinn.util.blocks import ModelTrainer, bundle
-from spinn.util.blocks import EncodeGRU, IntraAttention, Linear, ReduceTreeGRU, ReduceTreeLSTM, ReduceTensor
+from spinn.util.blocks import EncodeGRU, IntraAttention, Linear, ReduceTreeGRU, ReduceTreeLSTM, ReduceTensor,  bundle
 from spinn.util.misc import Args
 from spinn.util.logparse import parse_flags
 
@@ -35,6 +34,10 @@ from functools import reduce
 
 FLAGS = gflags.FLAGS
 
+def log_path(FLAGS, load=False):
+    lp = FLAGS.load_log_path if load else FLAGS.log_path
+    en = FLAGS.load_experiment_name if load else FLAGS.experiment_name
+    return os.path.join(lp, en) + ".log"
 
 def sequential_only():
     return FLAGS.model_type == "RNN" or FLAGS.model_type == "CBOW" or FLAGS.model_type == "ChoiPyramid" or FLAGS.model_type == "EESC"
@@ -42,12 +45,6 @@ def sequential_only():
 
 def pad_from_left():
     return FLAGS.model_type == "RNN" or FLAGS.model_type == "CBOW"
-
-
-def log_path(FLAGS, load=False):
-    lp = FLAGS.load_log_path if load else FLAGS.log_path
-    en = FLAGS.load_experiment_name if load else FLAGS.experiment_name
-    return os.path.join(lp, en) + ".log"
 
 
 def get_batch(batch):
@@ -99,25 +96,6 @@ def get_data_manager(data_type):
         raise NotImplementedError
 
     return data_manager
-
-
-def get_checkpoint_path(
-        ckpt_path,
-        experiment_name,
-        suffix=".ckpt",
-        best=False):
-    # Set checkpoint path.
-
-    if FLAGS.expanded_eval_only_mode and FLAGS.expanded_eval_only_mode_use_best_checkpoint:
-        best = True
-
-    if ckpt_path.endswith(".ckpt") or ckpt_path.endswith(".ckpt_best"):
-        checkpoint_path = ckpt_path
-    else:
-        checkpoint_path = os.path.join(ckpt_path, experiment_name + suffix)
-    if best:
-        checkpoint_path += "_best"
-    return checkpoint_path
 
 
 def load_data_and_embeddings(
@@ -173,20 +151,25 @@ def load_data_and_embeddings(
     # Trim dataset, convert token sequences to integer sequences, crop, and
     # pad.
     logger.Log("Preprocessing training data.")
-    training_data = util.PreprocessDataset(
-        raw_training_data,
-        vocabulary,
-        FLAGS.seq_length,
-        data_manager,
-        eval_mode=False,
-        logger=logger,
-        sentence_pair_data=data_manager.SENTENCE_PAIR_DATA,
-        simple=sequential_only(),
-        allow_cropping=FLAGS.allow_cropping,
-        pad_from_left=pad_from_left()) if raw_training_data is not None else None
-    training_data_iter = util.MakeTrainingIterator(
-        training_data, FLAGS.batch_size, FLAGS.smart_batching, FLAGS.use_peano,
-        sentence_pair_data=data_manager.SENTENCE_PAIR_DATA) if raw_training_data is not None else None
+    if raw_training_data is not None:
+        training_data = util.PreprocessDataset(
+            raw_training_data,
+            vocabulary,
+            FLAGS.seq_length,
+            data_manager,
+            eval_mode=False,
+            logger=logger,
+            sentence_pair_data=data_manager.SENTENCE_PAIR_DATA,
+            simple=sequential_only(),
+            allow_cropping=FLAGS.allow_cropping,
+            pad_from_left=pad_from_left()) if raw_training_data is not None else None
+        training_data_iter = util.MakeTrainingIterator(
+            training_data, FLAGS.batch_size, FLAGS.smart_batching, FLAGS.use_peano,
+            sentence_pair_data=data_manager.SENTENCE_PAIR_DATA) if raw_training_data is not None else None
+        training_data_length = len(training_data[0])
+    else:
+        training_data_iter = None
+        training_data_length = 0
 
     # Preprocess eval sets.
     eval_iterators = []
@@ -208,7 +191,7 @@ def load_data_and_embeddings(
             rseed=FLAGS.shuffle_eval_seed)
         eval_iterators.append((filename, eval_it))
 
-    return vocabulary, initial_embeddings, training_data_iter, eval_iterators, len(training_data[0])
+    return vocabulary, initial_embeddings, training_data_iter, eval_iterators, training_data_length
 
 
 def get_flags():
@@ -467,13 +450,13 @@ def get_flags():
                         "Used for dropout in the semantic task classifier.")
 
     # Optimization settings.
-    gflags.DEFINE_enum("optimizer_type", "Adam", ["Adam", "SGD"], "")
+    gflags.DEFINE_enum("optimizer_type", "SGD", ["Adam", "SGD"], "")
     gflags.DEFINE_integer(
         "training_steps",
         1000000,
         "Stop training after this point.")
-    gflags.DEFINE_integer("batch_size", 32, "SGD minibatch size.")
-    gflags.DEFINE_float("learning_rate", 0.0003, "Used in optimizer.")  # https://twitter.com/karpathy/status/801621764144971776
+    gflags.DEFINE_integer("batch_size", 32, "Minibatch size.")
+    gflags.DEFINE_float("learning_rate", 0.5, "Used in optimizer.")  # https://twitter.com/karpathy/status/801621764144971776
     gflags.DEFINE_float("learning_rate_decay_when_no_progress", 0.5,
         "Used in optimizer. Decay the LR by this much every epoch steps if a new best has not been set in the last epoch.")
     gflags.DEFINE_float("clipping_max_value", 5.0, "")
@@ -501,7 +484,7 @@ def get_flags():
         "at most 0.99 of error at the previous checkpoint, save a special 'best' checkpoint.")
     gflags.DEFINE_integer(
         "early_stopping_steps_to_wait",
-        25000,
+        50000,
         "If development set error doesn't improve significantly in this many steps, cease training.")
     gflags.DEFINE_boolean("evalb", False, "Print transition statistics.")
     gflags.DEFINE_integer("num_samples", 0, "Print sampled transitions.")
@@ -528,7 +511,7 @@ def flag_defaults(FLAGS, load_log_flags=False):
     if load_log_flags:
         if FLAGS.load_log_path and os.path.exists(log_path(FLAGS, load=True)):
             log_flags = parse_flags(log_path(FLAGS, load=True))
-            for k in log_flags.keys():
+            for k in list(log_flags.keys()):
                 setattr(FLAGS, k, log_flags[k])
 
             # Optionally override flags from log file.
@@ -664,9 +647,9 @@ def init_model(
         composition_args.wrap_items = lambda x: bundle(x)
         composition_args.extract_h = lambda x: x.h
         composition_args.extract_c = lambda x: x.c
-        composition_args.size = FLAGS.model_dim / 2
+        composition_args.size = FLAGS.model_dim // 2
         composition = ReduceTreeLSTM(
-            FLAGS.model_dim / 2,
+            FLAGS.model_dim // 2,
             tracker_size=FLAGS.tracking_lstm_hidden_dim,
             use_tracking_in_composition=FLAGS.use_tracking_in_composition,
             composition_ln=FLAGS.composition_ln)
@@ -695,7 +678,10 @@ def init_model(
     model = build_model(data_manager, initial_embeddings, vocab_size,
                         num_classes, FLAGS, context_args, composition_args)
 
-    trainer = ModelTrainer(model, FLAGS.optimizer_type, FLAGS.learning_rate, FLAGS.l2_lambda, FLAGS.gpu)
+    # Debug
+    def set_debug(self):
+        self.debug = FLAGS.debug
+    model.apply(set_debug)
 
     # Print model size.
     logger.Log("Architecture: {}".format(model))
@@ -707,4 +693,4 @@ def init_model(
     if logfile_header:
         logfile_header.total_params = int(total_params)
 
-    return model, trainer
+    return model
