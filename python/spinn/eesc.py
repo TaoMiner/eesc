@@ -268,10 +268,12 @@ class BinaryTreeLSTM(nn.Module):
         self.intra_attention = intra_attention
         self.treelstm_layer = BinaryTreeLSTMLayer(
             hidden_dim, composition_ln=composition_ln)
+        self.switch_layer = Switch(hidden_dim)
+        self.non_comp_layer = NonCompLayer(hidden_dim)
 
         # TODO: Add something to blocks to make this use case more elegant.
         self.comp_query = Linear()(
-            in_features= 3 * hidden_dim,
+            in_features= hidden_dim,
             out_features=1,
             bias=False)
         self.trainable_temperature = trainable_temperature
@@ -298,17 +300,9 @@ class BinaryTreeLSTM(nn.Module):
         old_h, old_c = old_state
         old_h_left, old_h_right = old_h[:, :-1, :], old_h[:, 1:, :]
         old_c_left, old_c_right = old_c[:, :-1, :], old_c[:, 1:, :]
-        # extract h(-1) and h(+1)
-        old_h1 = old_h[:, :-1, :]
-        old_h2 = old_h[:, -1:, :]
-        new_h_size = new_h.size()
-        tmp_h = torch.cat([old_h1, old_h1, new_h], dim=2)
-        tmp_h1 = tmp_h.view(new_h_size[0], -1, new_h_size[-1])
-        tmp_h2 = torch.cat([tmp_h1, old_h2], dim=1)[:, 1:, :]
-        tmp_h3 = tmp_h2.contiguous().view(new_h_size[0], -1, 3 * new_h_size[-1])
         comp_weights = dot_nd(
             query=self.comp_query.weight.squeeze(),
-            candidates=tmp_h3)
+            candidates=new_h)
         if self.training:
             temperature = temperature_multiplier
             if self.trainable_temperature:
@@ -338,6 +332,11 @@ class BinaryTreeLSTM(nn.Module):
         right_mask = torch.cat(
             [right_mask_leftmost_col, select_mask_cumsum[:, :-1]], dim=1)
         right_mask_expand = right_mask.unsqueeze(2)
+        # non-comp
+        hn = self.non_comp_layer(hl=old_h_left, hr=old_h_right)
+        switch_alpha = self.switch_layer(hl = old_h_left, hr = old_h_right, hn = hn)
+        new_h = switch_alpha * hn + (1-switch_alpha) * new_h
+
         new_h = (select_mask_expand * new_h
                  + left_mask_expand * old_h_left
                  + right_mask_expand * old_h_right)
@@ -522,6 +521,27 @@ def sequence_mask(sequence_length, max_length=None):
     seq_length_expand = sequence_length.unsqueeze(1)
     return seq_range_expand < seq_length_expand
 
+class Switch(nn.Module):
+    def __init__(self, hidden_dim):
+        super(Switch, self).__init__()
+        self.fc1 = Linear()(in_features=3 * hidden_dim, out_features=hidden_dim,bias=False)
+        self.fc2 = Linear()(in_features= hidden_dim, out_features=1,bias=False)
+
+    def forward(self, hl, hr, hn):
+        h_cat = torch.cat([hl, hr, hn], dim=2)
+        h_tmp = F.tanh(self.fc1(h_cat))
+        alpha = F.sigmoid(self.fc2(h_tmp))
+        return alpha
+
+class NonCompLayer(nn.Module):
+    def __init__(self, hidden_dim):
+        super(NonCompLayer, self).__init__()
+        self.fc = Linear()(2*hidden_dim, hidden_dim)
+
+    def forward(self, hl=None, hr=None):
+        hlr_cat = torch.cat([hl, hr], dim=2)
+        h = F.tanh(self.fc(hlr_cat))
+        return h
 
 class BinaryTreeLSTMLayer(nn.Module):
     def __init__(self, hidden_dim, composition_ln=False):

@@ -5,7 +5,7 @@ import torch
 import torch.nn as nn
 from torch.autograd import Variable
 import torch.nn.functional as F
-from torch.nn.init import kaiming_normal
+from torch.nn.init import kaiming_normal, uniform
 from torch.nn.parameter import Parameter
 
 from functools import reduce
@@ -695,7 +695,7 @@ class MLP(nn.Module):
         setattr(
             self,
             'l{}'.format(num_mlp_layers),
-            Linear()(
+            Linear(initializer=UniInitializer)(
                 features_dim,
                 num_classes))
 
@@ -724,6 +724,8 @@ def ZeroInitializer(param):
     init = np.zeros(shape).astype(np.float32)
     param.data.set_(torch.from_numpy(init))
 
+def UniInitializer(param):
+    uniform(param, -0.005, 0.005)
 
 def Linear(initializer=kaiming_normal,
            bias_initializer=ZeroInitializer):
